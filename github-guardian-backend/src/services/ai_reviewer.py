@@ -110,6 +110,7 @@ Keep it professional, technical, and objective.
             response = client.chat.completions.create(
                 model=OR_MODEL,
                 messages=[{"role": "user", "content": prompt_content}],
+                max_tokens=4000,
                 extra_headers={
                     "HTTP-Referer": "https://github-guardian.local", # Optional
                     "X-Title": "GitHub Guardian Audit",
