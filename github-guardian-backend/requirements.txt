@@ -12,3 +12,4 @@ httpx
 docker
 slack-sdk
 gunicorn
+openai
