@@ -1,0 +1,14 @@
+fastapi
+uvicorn[standard]
+PyGithub
+python-dotenv
+celery
+redis
+sqlalchemy
+alembic
+pydantic-settings
+pyyaml
+httpx
+docker
+slack-sdk
+gunicorn

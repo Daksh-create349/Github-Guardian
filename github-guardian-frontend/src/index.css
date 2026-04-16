@@ -1,0 +1,116 @@
+@import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+
+:root {
+  --bg-color: #FFFFFF;
+  --surface-color: #F8F8F8;
+  --primary-color: #0969DA;
+  --text-color: #1F2328;
+  --border-color: #000000;
+  --shadow-color: #000000;
+  --accent-color: #4caf50;
+  --error-color: #cf222e;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  image-rendering: pixelated; /* Essential for the pixel look */
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  -webkit-font-smoothing: initial;
+  overflow-x: hidden;
+}
+
+.vt323 {
+  font-family: 'VT323', monospace;
+  font-size: 1.2rem;
+}
+
+/* Pixel Border Utility */
+.pixel-border {
+  border: 2px solid var(--border-color);
+  box-shadow: 4px 4px 0px var(--shadow-color);
+  transition: transform 0.1s;
+}
+
+.pixel-border:active {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0px var(--shadow-color);
+}
+
+/* 8-bit Button */
+.pixel-button {
+  display: inline-block;
+  padding: 10px 20px;
+  background: var(--bg-color);
+  border: 2px solid var(--border-color);
+  color: var(--border-color);
+  font-family: 'VT323', monospace;
+  font-size: 1.4rem;
+  cursor: pointer;
+  box-shadow: 4px 4px 0px var(--shadow-color);
+  text-transform: uppercase;
+  transition: all 0.1s;
+  text-decoration: none;
+}
+
+.pixel-button:hover {
+  background: var(--surface-color);
+}
+
+.pixel-button:active {
+  box-shadow: 0px 0px 0px var(--shadow-color);
+  transform: translate(4px, 4px);
+}
+
+.pixel-button.primary {
+  background: var(--primary-color);
+  color: #fff;
+}
+
+/* Pixel Bar Spinner */
+@keyframes pixel-spin {
+  0% { content: "[--  ]"; }
+  25% { content: "[ - -]"; }
+  50% { content: "[  --]"; }
+  75% { content: "[- - ]"; }
+}
+
+.pixel-spinner::after {
+  content: "[--  ]";
+  font-family: 'VT323', monospace;
+  animation: pixel-spin 0.8s steps(4) infinite;
+  color: var(--primary-color);
+}
+
+.status-done {
+  color: #2da44e;
+  font-weight: bold;
+}
+
+.status-wait {
+  color: #888;
+}
+
+/* Modern Layout Overrides */
+.MuiPaper-root {
+  border-radius: 0 !important;
+  border: 2px solid #000 !important;
+  box-shadow: 4px 4px 0px #000 !important;
+}
+
+.MuiButton-root {
+  border-radius: 0 !important;
+  font-family: 'VT323', monospace !important;
+  text-transform: uppercase !important;
+  border: 2px solid #000 !important;
+}
+
+.MuiTabs-indicator {
+  height: 4px !important;
+}
