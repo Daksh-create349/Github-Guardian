@@ -4,6 +4,10 @@ from src.api.v1.endpoints import scan, repo, webhook
 
 app = FastAPI(title="GitHub Guardian API")
 
+@app.get("/")
+async def root():
+    return {"status": "GUARDIAN SYSTEM ONLINE", "message": "Forensic Security Audit Engine is operational."}
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"], # For initial beginner deployment. Re-tighten this after launch.
