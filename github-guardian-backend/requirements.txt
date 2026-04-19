@@ -15,3 +15,4 @@ gunicorn
 openai
 python-multipart
 python-jose[cryptography]
+psycopg2-binary
