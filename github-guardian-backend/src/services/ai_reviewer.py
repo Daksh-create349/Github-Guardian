@@ -7,14 +7,11 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# OpenRouter Configuration
-OR_API_KEY = os.getenv("OPENROUTER_API_KEY")
-OR_MODEL = "google/gemini-2.0-flash-lite-001" # Verified OpenRouter slug
+# Direct OpenAI Configuration
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+OPENAI_MODEL = "gpt-4o-mini"  # Best rate limits + lowest cost on OpenAI
 
-client = OpenAI(
-  base_url="https://openrouter.ai/api/v1",
-  api_key=OR_API_KEY,
-)
+client = OpenAI(api_key=OPENAI_API_KEY)
 
 def extract_raw_content(file_path: str) -> str:
     """Extracts text content, with special handling for .ipynb."""
@@ -102,19 +99,15 @@ Based on the code snippets above, provide a CONCISE security review in Markdown 
 Keep it professional, technical, and objective.
 """
 
-        if not OR_API_KEY:
-            return {"detailed_review": "ERROR: OpenRouter API Key missing in environment."}
+        if not OPENAI_API_KEY:
+            return {"detailed_review": "ERROR: OpenAI API Key missing in environment. Set OPENAI_API_KEY in your .env file."}
 
         try:
-            # API Call to OpenRouter
+            # Direct OpenAI API Call
             response = client.chat.completions.create(
-                model=OR_MODEL,
+                model=OPENAI_MODEL,
                 messages=[{"role": "user", "content": prompt_content}],
                 max_tokens=4000,
-                extra_headers={
-                    "HTTP-Referer": "https://github-guardian.local", # Optional
-                    "X-Title": "GitHub Guardian Audit",
-                }
             )
             
             review_summary["detailed_review"] = response.choices[0].message.content

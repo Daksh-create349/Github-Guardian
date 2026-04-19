@@ -39,17 +39,20 @@ def scan_git_history(owner: str, repo_name: str):
         subprocess.run(["git", "clone", "--depth", "50", repo_url, td], capture_output=True, check=False)
         
         # 2. Scan active files (current tree)
-        # We use git grep as it's lightning fast
+        # We use git grep -n as it's lightning fast and gives line numbers
         for name, pattern in SECRET_PATTERNS.items():
-            res = subprocess.run(["git", "-C", td, "grep", "-E", pattern], capture_output=True, text=True, check=False)
+            res = subprocess.run(["git", "-C", td, "grep", "-n", "-E", pattern], capture_output=True, text=True, check=False)
             if res.stdout:
                 for line in res.stdout.splitlines():
-                    # Format: filename:matching_text
-                    parts = line.split(':', 1)
-                    if len(parts) == 2:
+                    # Format with -n: filename:line_number:matching_text
+                    parts = line.split(':', 2)
+                    if len(parts) >= 2:
+                        file_name = parts[0]
+                        line_num = int(parts[1]) if len(parts) >= 3 and parts[1].isdigit() else None
                         findings.append({
                             "pattern_matched": name,
-                            "commit_sha": f"Live:{parts[0]}",
+                            "commit_sha": f"Live:{file_name}",
+                            "line": line_num,
                             "secret_redacted": "REDACTED (Active File)"
                         })
 

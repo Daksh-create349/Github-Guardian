@@ -71,7 +71,10 @@ def generate_repo_report(findings: dict, repo_overview: dict) -> dict:
     for s in findings.get("sast_findings", []):
         weight = 4 if s["severity"] == "CRITICAL" else 2
         raw_score += weight
-        negatives.append(f"{s['severity']}: {s['type']} detected in {s['file']}.")
+        location = s['file']
+        if s.get('line'):
+            location += f":{s['line']}"
+        negatives.append(f"{s['severity']}: {s['type']} detected in {location}.")
 
     # CI/CD Misconfigs (Critical = 4 pts each)
     if ci_cd_issues > 0:

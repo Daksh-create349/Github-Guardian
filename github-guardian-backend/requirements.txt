@@ -13,3 +13,5 @@ docker
 slack-sdk
 gunicorn
 openai
+python-multipart
+python-jose[cryptography]

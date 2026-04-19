@@ -74,19 +74,26 @@ def analyze_code_semantics(owner: str, repo_name: str):
             
             try:
                 with open(full_path, 'r', errors='ignore') as f:
-                    content = f.read()
+                    lines = f.readlines()
                     
                 for rule in SAST_PATTERNS:
                     if ext in rule["languages"] or not rule["languages"]:
+                        matched = False
                         for pattern in rule["patterns"]:
-                            if re.search(pattern, content):
-                                findings.append({
-                                    "type": rule["name"],
-                                    "file": file_path,
-                                    "severity": rule["severity"],
-                                    "pattern_matched": pattern
-                                })
-                                break # One finding per rule per file
+                            if matched:
+                                break
+                            for line_num, line_content in enumerate(lines, start=1):
+                                if re.search(pattern, line_content):
+                                    findings.append({
+                                        "type": rule["name"],
+                                        "file": file_path,
+                                        "line": line_num,
+                                        "severity": rule["severity"],
+                                        "pattern_matched": pattern,
+                                        "code_snippet": line_content.strip()[:120]
+                                    })
+                                    matched = True
+                                    break # One finding per rule per file
             except: continue
             
     return findings

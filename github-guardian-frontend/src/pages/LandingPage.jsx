@@ -1,11 +1,18 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box, Typography, Container, Paper } from '@mui/material';
+import { GitHub as GitHubIcon } from '@mui/icons-material';
 import octocatLogo from '../assets/octocat.png';
+import { useAuth } from '../context/AuthContext';
 
 export default function LandingPage() {
   const [url, setUrl] = useState('');
   const navigate = useNavigate();
+  const { user, logout } = useAuth();
+
+  const handleGitHubLogin = () => {
+    window.location.href = 'http://localhost:8000/api/v1/auth/login';
+  };
 
   const handleScan = () => {
     if (!url) return;
@@ -16,7 +23,8 @@ export default function LandingPage() {
   };
 
   return (
-    <Box sx={{ 
+    <Box sx={{ position: 'relative',
+
       minHeight: '100vh', 
       bgcolor: '#FFF', 
       display: 'flex', 
@@ -32,6 +40,32 @@ export default function LandingPage() {
           alt="Guardian Mascot" 
           style={{ width: '100%', height: '100%', imageRendering: 'pixelated' }} 
         />
+      </Box>
+
+      {/* Auth bar — top right */}
+      <Box sx={{ position: 'absolute', top: 20, right: 28, display: 'flex', alignItems: 'center', gap: 1 }}>
+        {user ? (
+          <>
+            <img src={user.avatar_url} alt={user.username}
+              style={{ width: 34, height: 34, borderRadius: '50%', border: '2px solid #000' }} />
+            <Typography className="vt323" sx={{ fontSize: '1.1rem' }}>@{user.username}</Typography>
+            <button className="pixel-button" style={{ fontSize: '0.9rem', padding: '4px 12px' }} onClick={logout}>
+              LOGOUT
+            </button>
+          </>
+        ) : (
+          <button
+            onClick={handleGitHubLogin}
+            style={{
+              border: '3px solid #000', background: '#000', color: '#fff',
+              padding: '8px 18px', fontFamily: "'VT323', monospace",
+              fontSize: '1.1rem', cursor: 'pointer', letterSpacing: 2,
+              display: 'flex', alignItems: 'center', gap: '8px',
+            }}
+          >
+            <GitHubIcon sx={{ fontSize: 20 }} /> SIGN IN WITH GITHUB
+          </button>
+        )}
       </Box>
 
       <Container maxWidth="sm" sx={{ textAlign: 'center' }}>
@@ -76,6 +110,38 @@ export default function LandingPage() {
             EXECUTE
           </button>
         </Paper>
+
+        {/* GitHub Desktop CTA */}
+        <div
+          onClick={() => navigate('/desktop')}
+          style={{
+            border: '3px solid #000', padding: '20px 28px', marginBottom: '32px',
+            cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '20px',
+            background: '#F8F8F8', transition: 'background 0.15s',
+            boxShadow: '4px 4px 0px #000'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = '#EFF6FF';
+            e.currentTarget.style.transform = 'translate(2px, 2px)';
+            e.currentTarget.style.boxShadow = '2px 2px 0px #000';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = '#F8F8F8';
+            e.currentTarget.style.transform = 'none';
+            e.currentTarget.style.boxShadow = '4px 4px 0px #000';
+          }}
+        >
+          <GitHubIcon sx={{ fontSize: '3rem' }} />
+          <div style={{ textAlign: 'left', flex: 1 }}>
+            <div style={{ fontFamily: "'VT323', monospace", fontSize: '1.6rem', letterSpacing: 3 }}>
+              GITHUB DESKTOP
+            </div>
+            <div style={{ fontFamily: "'VT323', monospace", fontSize: '1.1rem', opacity: 0.7 }}>
+              CREATE REPO · DRAG & DROP FILES · AUTO .GITIGNORE · PUSH IN ONE CLICK
+            </div>
+          </div>
+          <span style={{ fontFamily: "'VT323', monospace", fontSize: '1.5rem', opacity: 0.7 }}>→</span>
+        </div>
 
         <Box sx={{ mt: 8, display: 'flex', gap: 6, justifyContent: 'center' }}>
           <Box sx={{ textAlign: 'center' }}>

@@ -141,11 +141,13 @@ export default function DashboardPage() {
               <Box sx={{ bgcolor: '#FFF', p: 3 }}>
                 {activeTab === 0 && (
                   <FindingsTable 
-                    rows={(findings.sast_findings || []).map((f, i) => ({id: i, ...f}))} 
+                    rows={(findings.sast_findings || []).map((f, i) => ({id: i, ...f, location: f.line ? `${f.file}:${f.line}` : f.file}))} 
                     columns={[
-                      { field: 'type', headerName: 'ISSUE', width: 250 },
-                      { field: 'file', headerName: 'LOCATION', width: 200 },
-                      { field: 'severity', headerName: 'LEVEL', width: 120 },
+                      { field: 'type', headerName: 'ISSUE', width: 230 },
+                      { field: 'location', headerName: 'LOCATION', width: 220 },
+                      { field: 'line', headerName: 'LINE', width: 80, renderCell: (p) => <span style={{fontFamily: 'monospace', fontWeight: 'bold', color: '#0969DA'}}>{p.value ?? '—'}</span> },
+                      { field: 'severity', headerName: 'LEVEL', width: 100 },
+                      { field: 'code_snippet', headerName: 'CODE', width: 250, renderCell: (p) => <span style={{fontFamily: 'monospace', fontSize: '0.75rem', color: '#555'}} title={p.value}>{p.value ? (p.value.length > 40 ? p.value.slice(0, 40) + '…' : p.value) : '—'}</span> },
                       { field: 'ai', headerName: 'ACTION', width: 120, renderCell: (p) => <button className="pixel-button" style={{fontSize: '0.8rem', padding: '5px 10px'}} onClick={() => { setSelectedInsight(p.row.ai_insight); setModalOpen(true); }}>ANALYSIS</button> }
                     ]} 
                   />
@@ -156,6 +158,7 @@ export default function DashboardPage() {
                     columns={[
                       { field: 'pattern_matched', headerName: 'LEAK TYPE', width: 200 },
                       { field: 'commit_sha', headerName: 'LOCATOR', width: 200 },
+                      { field: 'line', headerName: 'LINE', width: 80, renderCell: (p) => <span style={{fontFamily: 'monospace', fontWeight: 'bold', color: '#0969DA'}}>{p.value ?? '—'}</span> },
                       { field: 'ai', headerName: 'ACTION', width: 120, renderCell: (p) => <button className="pixel-button" style={{fontSize: '0.8rem', padding: '5px 10px'}} onClick={() => { setSelectedInsight(p.row.ai_insight); setModalOpen(true); }}>ANALYSIS</button> }
                     ]} 
                   />

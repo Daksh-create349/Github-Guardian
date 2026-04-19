@@ -1,83 +1,103 @@
-# GitHub Guardian: Engineering a High-Fidelity Forensic Security Engine
+<div align="center">
+  <img src="https://raw.githubusercontent.com/github/explore/80688e429a7d4ef2fca1e82350fe8e3517d3494d/topics/security/security.png" alt="Security Shield" width="120" />
+  <br/>
+  <h1>GitHub Guardian</h1>
+  <p><strong>Deep Forensic Security & Safe Repository Management for the Modern Developer</strong></p>
 
-## Introduction
+  [![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi)](https://fastapi.tiangolo.com)
+  [![React](https://img.shields.io/badge/react-%2320232a.svg?style=for-the-badge&logo=react&logoColor=%2361DAFB)](https://reactjs.org/)
+  [![GitHub OAuth](https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white)](#)
+  [![OpenAI](https://img.shields.io/badge/OpenAI-412991?style=for-the-badge&logo=openai&logoColor=white)](#)
 
-GitHub Guardian is an advanced security auditing platform designed to transcend the limitations of traditional heuristic-based scanners. By integrating semantic analysis, historical git forensics, and modern large language model (LLM) orchestration, this platform provides a localized, high-fidelity security posture assessment. This document details the architectural decisions, security methodologies, and engineering philosophy behind the development of the GitHub Guardian.
+</div>
 
-## Strategic Vision
+---
 
-The project was conceived as a response to the "signal-to-noise" ratio problem in modern DevSecOps. Traditional scanners often flood developers with low-priority warnings, leading to "alert fatigue." GitHub Guardian objective is to prioritize **Forensic Impact**—focusing on active secrets, structural architectural flaws, and supply chain integrity—while presenting findings in a high-contrast "Neo-Retro" interface designed for focus and clarity.
+## ⚡ Introduction
 
-## Core Architectural Components
+GitHub Guardian is an advanced, high-fidelity security auditing platform built to solve the "signal-to-noise" problem in modern DevSecOps. Traditional scanners flood developers with low-priority warnings. Guardian focuses strictly on **Forensic Impact**—hunting active secrets, detecting structural flaws, and verifying supply chain integrity.
 
-### 1. The Orchestration Pipeline (`worker.py`)
-The system utilizes a centralized orchestration logic that manages the lifecycle of a repository audit. It handles the initial metadata fetch from the GitHub API, coordinates the cloning process into secure temporary environments, and sequences the execution of multiple independent security services. This parallel execution model ensures minimal latency even when performing deep forensic analysis.
+Now featuring an integrated **GitHub Desktop interface**, the platform allows developers to create secure repositories, automatically protect secrets through generated `.gitignore` files, and push code directly from the browser natively through their GitHub accounts.
 
-### 2. Semantic Analysis Engine (SAST)
-Moving beyond basic regex, the SAST module implements semantic pattern matching to identify real-world vulnerabilities:
-- **Injection Vectors**: Specialized logic to detect raw SQL interpolation and shell command concatenation.
-- **Cross-Site Scripting (XSS)**: Identifies insecure DOM manipulation patterns in JavaScript and TypeScript.
-- **Insecure Execution**: Flags dangerous functions such as `eval()` or `exec()` when bound to user-controlled inputs.
+---
 
-### 3. Deep Architectural AI Reviewer
-The integration of the Gemini 2.0 Flash Lite model via the OpenRouter API allows the platform to perform subjective architectural analysis.
-- **Contextual Awareness**: The engine identifies "Critical Path" files (Authentication, Database, Routing) and extracts code snippets.
-- **Jupyter Notebook Integration**: A dedicated parser extracts code cells from `.ipynb` files, enabling security audits of Data Science and AI repositories.
+## 🚀 Key Features
 
-### 4. Secret Forensics (Leak Auditing)
-The platform employs two levels of secret discovery:
-- **Live Exposure**: Searching the current codebase for active keys/tokens.
-- **Historical Forensics**: Traversing the Git DAG to find secrets that were deleted but remain in the historical blobs (e.g., the "OOPS" commit detection).
+### 1. The GitHub Desktop Wizard
+A smooth, retro-styled web interface for securely initializing GitHub repositories.
+- **OAuth Integration**: Securely log in with GitHub to push code to your personal or organizational account.
+- **Smart Drag & Drop**: Add your project files instantly through the browser.
+- **Auto-Protect Secrets**: Automatically scans for `.env` files, `.pem` keys, and `node_modules` and dynamically generates a bulletproof `.gitignore` to prevent massive leaks.
+- **One-Click Push**: Instantly creates the remote repo, commits your code, and pushes the initial branch.
 
-## The Engineering of the Scoring Engine
+### 2. Deep Forensic Auditing (SAST & History)
+- **Live Exposure Detection**: Hunts the current codebase for active API keys, SSL certificates, and sensitive credentials.
+- **"OOPS Commit" Forensics**: Traverses the Git DAG (Directed Acyclic Graph) to find deleted secrets that still remain buried in historical blobs.
+- **Semantic Code Scanning**: Identifies real-world vulnerabilities (raw SQL injection, dangerous `eval` execution, XSS paths).
 
-The Security Score is the most critical metric in the platform. A major engineering challenge was preventing a single finding from creating an "alarmist" 10/10 score. To solve this, we implemented a non-linear normalization curve.
+### 3. AI Architectural Reviewer
+Powered by state-of-the-art LLMs (OpenAI/Gemini integrations).
+- Conducts subjective architectural analysis.
+- Extracts "Critical Path" files (Auth, DB, Routing).
+- Fully supports Data Science repositories by parsing `.ipynb` Jupyter notebook cells.
 
-### Mathematical Definition
-The system calculates a `raw_score` based on weighted finding severities, then applies the following dampening function:
-`Final Score = 10 * (1 - 0.85^(raw_score / 2))`
+---
 
-### Rational
-- **Initial Impact**: The first major finding (e.g., a live AWS key) has a high marginal impact, moving the score immediately into the "CAUTION" zone.
-- **Saturation**: As findings accumulate, the marginal impact decreases. A "10/10" is only achievable if the repository exhibits a total collapse of security controls across multiple forensic domains.
+## 📐 The Architecture
 
-## Design Philosophy: Neo-Retro Forensics
+- **Backend**: **FastAPI** drives an asynchronous orchestration pipeline. It utilizes `PyGithub` for tree/blob manipulation, `python-jose` for JWT sessions, and interfaces securely with AI endpoints.
+- **Frontend**: **React + Vite** delivering a stunning "Neo-Retro" 8-bit interface. Customized Material UI components wrapped in VT323 typography create an authoritative "mainframe terminal" experience.
+- **Scoring Engine**: Implements a non-linear normalization curve (`Final Score = 10 * (1 - 0.85^(raw_score / 2))`) to prevent alert fatigue, keeping a 10/10 score reserved only for total security collapses.
 
-The choice of a white-themed pixel-art UI (Neo-Retro) was a deliberate design decision:
-- **Forensic Focus**: High-contrast black-on-white text with sharp borders provides a "terminal printout" feel, emphasizing objectivity and raw data.
-- **VT323 Typography**: Using a monospace pixel font maintains the aesthetic of 1980s mainframe security terminals, framing the audit as an authoritative forensic report.
-- **Animated Status**: Replacing traditional circular progress bars with customized pixel-bar spinners provides real-time feedback without distracting from the technical data.
+---
 
-## System Implementation Details
+## 🛠️ Getting Started
 
-### Frontend Stack
-- **React 18 & Vite**: For high-performance asset bundling and development hot-reloading.
-- **Material UI**: Utilized for standard layout containers, but heavily overridden with custom CSS for pixelated borders and sharp-edged shadows.
-- **Dynamic Routing**: Implementation of a single-page architecture (SPA) that transitions from a "Forced Audit" landing page to a live audit dashboard.
+### 1. Clone the Repository
+```bash
+git clone https://github.com/your-username/github-guardian.git
+cd github-guardian
+```
 
-### Backend Stack
-- **FastAPI**: Chosen for its high-performance asynchronous capabilities and integrated Pydantic validation.
-- **Gunicorn/Uvicorn**: Configured for production-grade concurrency.
-- **Git Integration**: Direct integration with the Git binary to perform shallow clones and history traversals.
+### 2. Backend Setup
+```bash
+cd github-guardian-backend
+python -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+```
+Create a `.env` file containing your credentials:
+```env
+GITHUB_TOKEN=your_fallback_server_token
+GITHUB_CLIENT_ID=your_oauth_client_id
+GITHUB_CLIENT_SECRET=your_oauth_client_secret
+JWT_SECRET=your_super_secret_jwt_key
+OPENAI_API_KEY=your_openai_key
 
-## Deployment Strategy
+FRONTEND_URL=http://localhost:3000
+BACKEND_URL=http://localhost:8000
+```
+Start the API:
+```bash
+uvicorn main:app --reload --port 8000
+```
 
-### Infrastructure as Code
-- **Render (Backend)**: Utilizes the `Procfile` architecture for automatic scaling and port binding.
-- **Vercel (Frontend)**: Optimized for static asset delivery with dynamic environment-based API resolution.
+### 3. Frontend Setup
+```bash
+cd github-guardian-frontend
+npm install
+npm run dev
+```
+Navigate to `http://localhost:3000` to begin your deep forensic audit!
 
-### Continuous Improvement
-Future versions of the Guardian are planned to include:
-- **Automated Git Scrubbing**: Generating `git-filter-repo` commands to automatically clean leaks.
-- **Webhook Integration**: Real-time push-based auditing for organization-wide security monitoring.
+---
 
-## Testing and Verification
+## 🧪 Testing the Auditor
 
-To verify the auditing capabilities of GitHub Guardian, it is recommended to scan repositories with known security debt. The following intentionally vulnerable repositories provide a robust testing baseline:
+Want to test GitHub Guardian's forensic capabilities? Try scanning these intentionally vulnerable repositories:
+- [OWASP NodeGoat](https://github.com/OWASP/NodeGoat) - Demonstrates high-risk vulnerabilities in Node.js applications.
+- [Broken Crystals](https://github.com/BrightSecurity/broken-crystals) - A modern vulnerable application featuring complex SAST and secret-based vulnerabilities.
 
-- **OWASP NodeGoat**: [https://github.com/OWASP/NodeGoat](https://github.com/OWASP/NodeGoat) - Demonstrates high-risk vulnerabilities in Node.js applications, including NoSQL injection and session management flaws.
-- **Broken Crystals**: [https://github.com/BrightSecurity/broken-crystals](https://github.com/BrightSecurity/broken-crystals) - A modern vulnerable application featuring complex SAST and secret-based vulnerabilities.
+---
 
-## Maintenance and Ownership
-
-GitHub Guardian is intended for professional use by security engineers and repository maintainers. All analytical modules are designed to be extensible, allowing for the addition of new SAST patterns and forensic checks as the security landscape evolves.
+> *"Security isn't about building a wall. It's about knowing exactly what's inside the walls."*

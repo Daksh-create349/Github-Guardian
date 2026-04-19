@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from src.api.v1.endpoints import scan, repo, webhook
+from src.api.v1.endpoints import scan, repo, webhook, desktop, auth
 
 app = FastAPI(title="GitHub Guardian API")
 
@@ -19,6 +19,8 @@ app.add_middleware(
 app.include_router(scan.router, prefix="/api/v1")
 app.include_router(repo.router, prefix="/api/v1")
 app.include_router(webhook.router, prefix="/api/v1")
+app.include_router(desktop.router, prefix="/api/v1")
+app.include_router(auth.router, prefix="/api/v1")
 
 if __name__ == "__main__":
     import uvicorn
