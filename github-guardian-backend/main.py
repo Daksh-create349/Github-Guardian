@@ -1,6 +1,11 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from src.api.v1.endpoints import scan, repo, webhook, desktop, auth
+from src.db.session import engine
+from src.db import models
+
+# Create database tables
+models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="GitHub Guardian API")
 

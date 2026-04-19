@@ -157,8 +157,8 @@ export default function GithubDesktopPage() {
       try {
         const { data } = await client.get(`/desktop/check-name/${encodeURIComponent(repoName.trim())}`);
         setNameStatus(data);
-        if (data.available && !commitMessage) {
-          setCommitMessage(`Initial commit — ${data.sanitized_name}`);
+        if (!commitMessage) {
+          setCommitMessage(data.available ? `Initial commit — ${data.sanitized_name}` : `Auto update — ${data.sanitized_name}`);
         }
       } catch {
         setNameStatus(null);
@@ -195,23 +195,30 @@ export default function GithubDesktopPage() {
 
   // ── Push ────────────────────────────────────────────────────────────────────
   const handlePush = async () => {
-    if (!nameStatus?.available) return;
+    if (!nameStatus) return;
     setPushStatus('pushing');
     setPushLog([]);
 
     const logStep = (msg) => setPushLog((prev) => [...prev, msg]);
+    const isUpdate = !nameStatus.available;
 
     logStep('Scanning files for secrets...');
     await new Promise((r) => setTimeout(r, 600));
     logStep('Generating .gitignore protection file...');
     await new Promise((r) => setTimeout(r, 500));
-    logStep(`Creating repository "${nameStatus.sanitized_name}" on GitHub...`);
+    
+    if (isUpdate) {
+        logStep(`Syncing changes to existing repository "${nameStatus.sanitized_name}"...`);
+        logStep(`Checking remote files and using AI conflict resolution if needed...`);
+    } else {
+        logStep(`Creating repository "${nameStatus.sanitized_name}" on GitHub...`);
+    }
 
     const formData = new FormData();
     formData.append('repo_name', nameStatus.sanitized_name);
     formData.append('description', description);
     formData.append('private', isPrivate.toString());
-    formData.append('commit_message', commitMessage || `Initial commit — ${nameStatus.sanitized_name}`);
+    formData.append('commit_message', commitMessage || (isUpdate ? `Auto update` : `Initial commit`));
 
     const safeFiles = files.filter((f) => f.sensitivity?.type !== 'excluded');
     for (const f of safeFiles) {
@@ -220,11 +227,20 @@ export default function GithubDesktopPage() {
 
     try {
       logStep(`Uploading ${safeFiles.length} file(s)...`);
-      const { data } = await client.post('/desktop/create-and-push', formData, {
+      const endpoint = isUpdate ? '/desktop/smart-push' : '/desktop/create-and-push';
+      const { data } = await client.post(endpoint, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
         timeout: 120000,
       });
       logStep(`Successfully pushed ${data.files_pushed} file(s)!`);
+      
+      if (isUpdate) {
+          logStep(`Created PR and Auto-Merged successfully!`);
+          if (data.conflict_resolutions?.length > 0) {
+              logStep(`AI intelligently resolved ${data.conflict_resolutions.length} merge conflict(s).`);
+          }
+      }
+      
       logStep(`Repository is live at github.com/${nameStatus.username}/${nameStatus.sanitized_name}`);
       setPushResult(data);
       setPushStatus('done');
@@ -241,7 +257,7 @@ export default function GithubDesktopPage() {
   const excluded = files.filter((f) => f.sensitivity?.type === 'excluded');
   const keys = files.filter((f) => f.sensitivity?.type === 'key');
   const safe = files.filter((f) => !f.sensitivity);
-  const canProceed1 = nameStatus?.available;
+  const canProceed1 = nameStatus != null;
   const canProceed2 = files.length > 0;
 
   // ── Auth Guards ─────────────────────────────────────────────────────────────
@@ -302,6 +318,7 @@ export default function GithubDesktopPage() {
             <img src={user.avatar_url} alt={user.username} style={{ width: 28, height: 28, borderRadius: '50%' }} />
             <span className="vt323" style={{ fontSize: '1rem', opacity: 0.9 }}>@{user.username}</span>
           </div>
+          <button className="pixel-button" style={{ background: 'transparent', color: '#fff', borderColor: '#fff' }} onClick={() => navigate('/history')}>YOUR REPOS</button>
           <button className="pixel-button" style={{ background: 'transparent', color: '#fff', borderColor: '#fff' }} onClick={logout}>LOGOUT</button>
           <button className="pixel-button" style={{ background: 'transparent', color: '#fff', borderColor: '#fff' }} onClick={() => navigate('/')}>BACK</button>
         </div>
@@ -370,8 +387,8 @@ export default function GithubDesktopPage() {
                     fontSize: '1.1rem', whiteSpace: 'nowrap',
                   }}>
                     {nameStatus === 'checking' && <><HourglassIcon fontSize="small" /> CHECKING...</>}
-                    {nameStatus?.available === true && <><CheckIcon fontSize="small" sx={{ color: '#2da44e' }} /> <span style={{ color: '#2da44e' }}>AVAILABLE</span></>}
-                    {nameStatus?.available === false && <><CloseIcon fontSize="small" sx={{ color: '#cf222e' }} /> <span style={{ color: '#cf222e' }}>TAKEN</span></>}
+                    {nameStatus?.available === true && <><CheckIcon fontSize="small" sx={{ color: '#2da44e' }} /> <span style={{ color: '#2da44e' }}>AVAILABLE (NEW)</span></>}
+                    {nameStatus?.available === false && <><RefreshIcon fontSize="small" sx={{ color: '#0969DA' }} /> <span style={{ color: '#0969DA' }}>EXISTS (WILL SYNC)</span></>}
                     {!repoName && <span style={{ opacity: 0.4 }}>TYPE A NAME</span>}
                   </div>
                 </div>
@@ -382,25 +399,11 @@ export default function GithubDesktopPage() {
                     &nbsp;(spaces & special chars auto-fixed)
                   </div>
                 )}
-
-                {nameStatus?.available === false && nameStatus.suggestions?.length > 0 && (
-                  <div style={{ marginTop: '16px' }}>
-                    <div className="vt323" style={{ fontSize: '1rem', marginBottom: '8px', color: '#666' }}>
-                      SUGGESTED ALTERNATIVES:
+                
+                {nameStatus?.available === false && (
+                    <div className="vt323" style={{ marginTop: '8px', color: '#0969DA', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <BulbIcon fontSize="small" /> We detected this repository already exists on your account. We will seamlessly pull, resolve conflicts via AI, and auto-merge your new files!
                     </div>
-                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                      {nameStatus.suggestions.map((s) => (
-                        <button
-                          key={s}
-                          className="pixel-button primary"
-                          style={{ fontSize: '1rem', padding: '6px 14px' }}
-                          onClick={() => setRepoName(s)}
-                        >
-                          {s}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
                 )}
               </div>
 

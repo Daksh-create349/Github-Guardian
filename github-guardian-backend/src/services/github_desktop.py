@@ -1,9 +1,10 @@
 import os
 import re
 import base64
-from github import Github, GithubException
+from datetime import datetime
+from github import Github, GithubException, InputGitTreeElement
 from src.core.config import settings
-
+from src.services.conflict_resolver import resolve_file_conflict
 # ─── Sensitivity Rules ───────────────────────────────────────────────────────
 
 SENSITIVE_FILE_NAMES = {
@@ -358,4 +359,400 @@ def create_repo_and_push(
         except Exception:
             pass
         raise Exception(f"Push failed: {str(e)}")
+
+
+async def smart_push_to_existing_repo(
+    repo_name: str,
+    commit_message: str,
+    files: list,  # list of (filename: str, content: bytes) tuples
+    github_token: str
+) -> dict:
+    """
+    Pushes files to an existing GitHub repository.
+    1. Creates a new branch off the default branch.
+    2. Compares incoming files with remote files.
+    3. Resolves conflicts using AI if necessary.
+    4. Commits to new branch, creates PR, and auto-merges it.
+    """
+    g = Github(github_token)
+    user = g.get_user()
+
+    try:
+        repo = user.get_repo(repo_name)
+    except GithubException:
+        raise Exception(f"Repository '{repo_name}' not found. Make sure it exists.")
+
+    default_branch = repo.default_branch
+    timestamp = datetime.utcnow().strftime("%Y%m%d%H%M%S")
+    new_branch_name = f"guardian-update-{timestamp}"
+
+    # 1. Get default branch ref to base the new branch on
+    ref = repo.get_git_ref(f"heads/{default_branch}")
+    latest_sha = ref.object.sha
+    latest_commit = repo.get_git_commit(latest_sha)
+    base_tree = repo.get_git_tree(latest_commit.tree.sha, recursive=True)
+
+    # 2. Create the new branch
+    repo.create_git_ref(ref=f"refs/heads/{new_branch_name}", sha=latest_sha)
+
+    # Map existing files in tree for quick lookup
+    existing_files = {element.path: element for element in base_tree.tree if element.type == "blob"}
+
+    skipped_files = []
+    tree_elements = []
+    pushed_files = []
+    conflict_resolutions = []
+
+    for fname, content_bytes in files:
+        skip, reason = should_skip_file(fname)
+        if skip:
+            skipped_files.append({"file": fname, "reason": reason})
+            continue
+
+        if len(content_bytes) > MAX_FILE_SIZE_BYTES:
+            skipped_files.append({"file": fname, "reason": "File too large (>50MB)"})
+            continue
+
+        clean_path = fname.replace("\\", "/").lstrip("/")
+        
+        # Determine if we need to auto-resolve conflict
+        final_content_bytes = content_bytes
+        if clean_path in existing_files: # File already exists on remote
+            try:
+                # Try to decode as text for AI resolution
+                local_text = content_bytes.decode("utf-8")
+                
+                # Fetch remote content
+                remote_blob = repo.get_git_blob(existing_files[clean_path].sha)
+                if remote_blob.encoding == "base64":
+                    remote_bytes = base64.b64decode(remote_blob.content)
+                    try:
+                        remote_text = remote_bytes.decode("utf-8")
+                        
+                        # Only invoke AI if contents actually differ
+                        if local_text != remote_text:
+                            resolved_text = await resolve_file_conflict(clean_path, remote_text, local_text)
+                            final_content_bytes = resolved_text.encode("utf-8")
+                            conflict_resolutions.append(clean_path)
+                    except UnicodeDecodeError:
+                        # Remote is binary, just overwrite with local
+                        pass
+            except UnicodeDecodeError:
+                # Local is binary, cannot use AI, just overwrite
+                pass
+
+        # Create Blob
+        try:
+            try:
+                text_content = final_content_bytes.decode("utf-8")
+                blob = repo.create_git_blob(text_content, "utf-8")
+            except UnicodeDecodeError:
+                b64 = base64.b64encode(final_content_bytes).decode("ascii")
+                blob = repo.create_git_blob(b64, "base64")
+
+            tree_elements.append(
+                InputGitTreeElement(
+                    path=clean_path,
+                    mode="100644",
+                    type="blob",
+                    sha=blob.sha,
+                )
+            )
+            pushed_files.append(clean_path)
+        except Exception as ex:
+            skipped_files.append({"file": clean_path, "reason": str(ex)})
+
+    if not tree_elements:
+        # Delete branch if nothing to push
+        repo.get_git_ref(f"heads/{new_branch_name}").delete()
+        raise Exception("No files could be successfully processed.")
+
+    # 3. Create Tree and Commit
+    new_tree = repo.create_git_tree(tree_elements, base_tree=repo.get_git_tree(latest_commit.tree.sha))
+    new_commit = repo.create_git_commit(
+        message=commit_message or f"Guardian auto-update {timestamp}",
+        tree=new_tree,
+        parents=[latest_commit],
+    )
+
+    # 4. Update the new branch
+    repo.get_git_ref(f"heads/{new_branch_name}").edit(new_commit.sha)
+
+    # 5. Create Pull Request
+    pr = repo.create_pull(
+        title=f"Guardian Auto-Update: {commit_message or timestamp}",
+        body="Automated PR created by GitHub Guardian Desktop. \n\nConflicts automatically resolved by AI.",
+        head=new_branch_name,
+        base=default_branch
+    )
+
+    # 6. Auto-merge the PR
+    merge_status = pr.merge(merge_method="squash")
+
+    # 7. Cleanup the branch after merge
+    try:
+        repo.get_git_ref(f"heads/{new_branch_name}").delete()
+    except:
+        pass # Ignore cleanup failure
+
+    return {
+        "success": True,
+        "repo_url": repo.html_url,
+        "clone_url": repo.clone_url,
+        "files_pushed": len(pushed_files),
+        "pushed_files": pushed_files,
+        "files_skipped": len(skipped_files),
+        "skipped_files": skipped_files,
+        "conflict_resolutions": conflict_resolutions,
+        "pr_url": pr.html_url,
+        "merged": merge_status.merged
+    }
+
+
+def create_new_branch(repo_name: str, new_branch_name: str, base_branch: str, github_token: str) -> dict:
+    """
+    Creates a new branch off a base branch in the given repository.
+    """
+    g = Github(github_token)
+    user = g.get_user()
+    try:
+        repo = user.get_repo(repo_name)
+    except GithubException:
+        raise Exception(f"Repository '{repo_name}' not found.")
+
+    # Sanitize branch name
+    safe_name = re.sub(r"[^a-zA-Z0-9._\-/]", "-", new_branch_name).strip("-")
+    if not safe_name:
+        safe_name = f"feature-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}"
+
+    # Check if branch already exists
+    try:
+        repo.get_git_ref(f"heads/{safe_name}")
+        raise Exception(f"Branch '{safe_name}' already exists.")
+    except GithubException:
+        pass  # Good — it doesn't exist
+
+    # Get base branch SHA
+    try:
+        base_ref = repo.get_git_ref(f"heads/{base_branch}")
+    except GithubException:
+        raise Exception(f"Base branch '{base_branch}' not found.")
+
+    # Create new branch
+    repo.create_git_ref(ref=f"refs/heads/{safe_name}", sha=base_ref.object.sha)
+
+    return {
+        "success": True,
+        "branch_name": safe_name,
+        "base_branch": base_branch,
+        "repo_url": repo.html_url,
+    }
+
+
+def push_files_to_branch(
+    repo_name: str,
+    branch_name: str,
+    commit_message: str,
+    files: list,  # list of (filename, content_bytes)
+    github_token: str,
+) -> dict:
+    """
+    Pushes files directly to a specific branch WITHOUT creating a PR.
+    Used after the user creates a new branch and wants to add files to it.
+    """
+    g = Github(github_token)
+    user = g.get_user()
+    try:
+        repo = user.get_repo(repo_name)
+    except GithubException:
+        raise Exception(f"Repository '{repo_name}' not found.")
+
+    try:
+        ref = repo.get_git_ref(f"heads/{branch_name}")
+    except GithubException:
+        raise Exception(f"Branch '{branch_name}' not found.")
+
+    latest_sha = ref.object.sha
+    latest_commit = repo.get_git_commit(latest_sha)
+    base_tree = repo.get_git_tree(latest_commit.tree.sha)
+
+    skipped_files = []
+    tree_elements = []
+    pushed_files = []
+
+    for fname, content_bytes in files:
+        skip, reason = should_skip_file(fname)
+        if skip:
+            skipped_files.append({"file": fname, "reason": reason})
+            continue
+        if len(content_bytes) > MAX_FILE_SIZE_BYTES:
+            skipped_files.append({"file": fname, "reason": "File too large (>50MB)"})
+            continue
+
+        clean_path = fname.replace("\\", "/").lstrip("/")
+        try:
+            try:
+                blob = repo.create_git_blob(content_bytes.decode("utf-8"), "utf-8")
+            except UnicodeDecodeError:
+                blob = repo.create_git_blob(base64.b64encode(content_bytes).decode("ascii"), "base64")
+
+            tree_elements.append(InputGitTreeElement(path=clean_path, mode="100644", type="blob", sha=blob.sha))
+            pushed_files.append(clean_path)
+        except Exception as ex:
+            skipped_files.append({"file": clean_path, "reason": str(ex)})
+
+    if not tree_elements:
+        raise Exception("No files could be pushed.")
+
+    new_tree = repo.create_git_tree(tree_elements, base_tree=base_tree)
+    new_commit = repo.create_git_commit(
+        message=commit_message or f"Push to {branch_name} via GitHub Guardian",
+        tree=new_tree,
+        parents=[latest_commit],
+    )
+    ref.edit(new_commit.sha)
+
+    return {
+        "success": True,
+        "branch_name": branch_name,
+        "files_pushed": len(pushed_files),
+        "pushed_files": pushed_files,
+        "files_skipped": len(skipped_files),
+        "skipped_files": skipped_files,
+        "repo_url": repo.html_url,
+    }
+
+
+async def merge_with_conflict_check(
+    repo_name: str,
+    source_branch: str,
+    target_branch: str,
+    github_token: str,
+) -> dict:
+    """
+    The smart merge flow:
+    1. Compare files between source and target branch.
+    2. If no conflicts → create PR and merge directly.
+    3. If conflicts → try AI resolution on each conflicting file.
+    4. If AI fixes all → push resolved files to source → merge PR.
+    5. If AI cannot fix some → return unfixable list to user.
+    """
+    g = Github(github_token)
+    user = g.get_user()
+    try:
+        repo = user.get_repo(repo_name)
+    except GithubException:
+        raise Exception(f"Repository '{repo_name}' not found.")
+
+    # Get tree of both branches
+    source_ref = repo.get_git_ref(f"heads/{source_branch}")
+    target_ref = repo.get_git_ref(f"heads/{target_branch}")
+
+    source_commit = repo.get_git_commit(source_ref.object.sha)
+    target_commit = repo.get_git_commit(target_ref.object.sha)
+
+    source_tree = {e.path: e for e in repo.get_git_tree(source_commit.tree.sha, recursive=True).tree if e.type == "blob"}
+    target_tree = {e.path: e for e in repo.get_git_tree(target_commit.tree.sha, recursive=True).tree if e.type == "blob"}
+
+    # Find files that exist in BOTH branches but have DIFFERENT SHAs (potential conflicts)
+    conflicting_files = [
+        path for path in source_tree
+        if path in target_tree and source_tree[path].sha != target_tree[path].sha
+    ]
+
+    conflict_results = {
+        "total_conflicts": len(conflicting_files),
+        "ai_fixed": [],
+        "ai_failed": [],
+    }
+
+    if conflicting_files:
+        # Try AI resolution for each conflicting file
+        resolution_tree_elements = []
+
+        for path in conflicting_files:
+            try:
+                source_blob = repo.get_git_blob(source_tree[path].sha)
+                target_blob = repo.get_git_blob(target_tree[path].sha)
+
+                src_bytes = base64.b64decode(source_blob.content) if source_blob.encoding == "base64" else source_blob.content.encode("utf-8")
+                tgt_bytes = base64.b64decode(target_blob.content) if target_blob.encoding == "base64" else target_blob.content.encode("utf-8")
+
+                try:
+                    src_text = src_bytes.decode("utf-8")
+                    tgt_text = tgt_bytes.decode("utf-8")
+
+                    if src_text == tgt_text:
+                        continue  # Same content, no real conflict
+
+                    resolved = await resolve_file_conflict(path, tgt_text, src_text)
+                    blob = repo.create_git_blob(resolved, "utf-8")
+                    resolution_tree_elements.append(
+                        InputGitTreeElement(path=path, mode="100644", type="blob", sha=blob.sha)
+                    )
+                    conflict_results["ai_fixed"].append(path)
+                except UnicodeDecodeError:
+                    # Binary file conflict — cannot auto-resolve
+                    conflict_results["ai_failed"].append(path)
+
+            except Exception as ex:
+                conflict_results["ai_failed"].append(path)
+
+        # If there are unfixable conflicts, stop and tell user
+        if conflict_results["ai_failed"]:
+            return {
+                "success": False,
+                "merged": False,
+                "reason": "conflict_unfixable",
+                "conflict_results": conflict_results,
+                "message": f"We tried our best but could not automatically fix conflicts in: {', '.join(conflict_results['ai_failed'])}. Please resolve these manually.",
+            }
+
+        # Push AI-resolved files back to source branch
+        if resolution_tree_elements:
+            src_ref = repo.get_git_ref(f"heads/{source_branch}")
+            src_commit = repo.get_git_commit(src_ref.object.sha)
+            resolved_tree = repo.create_git_tree(resolution_tree_elements, base_tree=repo.get_git_tree(src_commit.tree.sha))
+            resolved_commit = repo.create_git_commit(
+                message=f"Guardian AI: Auto-resolve conflicts before merge into {target_branch}",
+                tree=resolved_tree,
+                parents=[src_commit],
+            )
+            src_ref.edit(resolved_commit.sha)
+
+    # Create and merge the PR
+    pr = repo.create_pull(
+        title=f"Guardian: Merge '{source_branch}' → '{target_branch}'",
+        body=f"Automated PR by GitHub Guardian.\n\n"
+             f"- Conflicts found: {conflict_results['total_conflicts']}\n"
+             f"- AI resolved: {len(conflict_results['ai_fixed'])}\n"
+             f"- Unfixable: {len(conflict_results['ai_failed'])}",
+        head=source_branch,
+        base=target_branch,
+    )
+
+    try:
+        merge_status = pr.merge(merge_method="squash")
+        merged = merge_status.merged
+    except GithubException as ge:
+        return {
+            "success": False,
+            "merged": False,
+            "reason": "merge_failed",
+            "message": str(ge.data),
+            "pr_url": pr.html_url,
+            "conflict_results": conflict_results,
+        }
+
+    return {
+        "success": True,
+        "merged": merged,
+        "pr_url": pr.html_url,
+        "source_branch": source_branch,
+        "target_branch": target_branch,
+        "conflict_results": conflict_results,
+        "message": f"Successfully merged '{source_branch}' into '{target_branch}'!" +
+                   (f" AI fixed {len(conflict_results['ai_fixed'])} conflict(s)." if conflict_results['ai_fixed'] else ""),
+    }
+
 
