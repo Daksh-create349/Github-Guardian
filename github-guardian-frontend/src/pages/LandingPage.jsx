@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box, Typography, Container, Paper } from '@mui/material';
 import { GitHub as GitHubIcon } from '@mui/icons-material';
-import octocatLogo from '../assets/octocat.png';
 import { useAuth } from '../context/AuthContext';
 import { API_AUTH_LOGIN_URL } from '../api/config';
 
@@ -35,11 +34,14 @@ export default function LandingPage() {
       p: 4
     }}>
       {/* Static Mascot */}
-      <Box sx={{ position: 'relative', mb: 4, width: 220, height: 220 }}>
+      <Box sx={{ 
+        position: 'relative', mb: 4, width: 220, height: 220, 
+        display: 'flex', alignItems: 'center', justifyContent: 'center'
+      }}>
         <img 
-          src={octocatLogo} 
-          alt="Guardian Mascot" 
-          style={{ width: '100%', height: '100%', imageRendering: 'pixelated' }} 
+          src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAwUlEQVR4nO2XsRLDMAhDLV3+/5fduw4dKMbgEOhQjSTo6RziOBhxzc11RMyQBD32x0NgN4cFcNOLBXDTk0XwpTcL4SoDGzgOA3r63vdcTsOV8W2xcOml5u41LBG7A8BYfnTtA6ViLe4f4FsczeIvB5hV5wGMPmH3CDJWwfTgoi4/0ydBXH0QDbIe3aYjQeE5E2oga2bC80SjWQuRNbAfH64uKPV0uBYgawBdcLUg4C6TO300jDI3qKXX5Wx87Oe0XS82cCQ5DhANRQAAAABJRU5ErkJggg==" 
+          alt="Pixel GitHub Logo"
+          style={{ width: '220px', height: '220px', imageRendering: 'pixelated', filter: 'drop-shadow(6px 6px 0px rgba(0,0,0,0.2))' }}
         />
       </Box>
 
@@ -71,7 +73,7 @@ export default function LandingPage() {
 
       <Container maxWidth="sm" sx={{ textAlign: 'center' }}>
         <Typography variant="h2" className="vt323" sx={{ mb: 1, letterSpacing: 4, fontWeight: 'bold' }}>
-          FORCED AUDIT
+          REPOSITORY AUDIT
         </Typography>
         <Typography variant="body1" className="vt323" sx={{ mb: 4, opacity: 0.8, fontSize: '1.4rem' }}>
           DEEP FORENSIC SECURITY FOR THE MODERN REPOSITORY

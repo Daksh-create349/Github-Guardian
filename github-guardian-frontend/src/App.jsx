@@ -5,6 +5,7 @@ import GithubDesktopPage from './pages/GithubDesktopPage';
 import AuthCallbackPage from './pages/AuthCallbackPage';
 import PushHistoryPage from './pages/PushHistoryPage';
 import RepoDetailPage from './pages/RepoDetailPage';
+import NotFoundPage from './pages/NotFoundPage';
 import { AuthProvider } from './context/AuthContext';
 
 function App() {
@@ -18,6 +19,7 @@ function App() {
           <Route path="/history" element={<PushHistoryPage />} />
           <Route path="/repo/:repoName" element={<RepoDetailPage />} />
           <Route path="/auth/callback" element={<AuthCallbackPage />} />
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>
