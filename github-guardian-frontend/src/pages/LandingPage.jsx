@@ -4,6 +4,7 @@ import { Box, Typography, Container, Paper } from '@mui/material';
 import { GitHub as GitHubIcon } from '@mui/icons-material';
 import octocatLogo from '../assets/octocat.png';
 import { useAuth } from '../context/AuthContext';
+import { API_AUTH_LOGIN_URL } from '../api/config';
 
 export default function LandingPage() {
   const [url, setUrl] = useState('');
@@ -11,7 +12,7 @@ export default function LandingPage() {
   const { user, logout } = useAuth();
 
   const handleGitHubLogin = () => {
-    window.location.href = 'http://localhost:8000/api/v1/auth/login';
+    window.location.href = API_AUTH_LOGIN_URL;
   };
 
   const handleScan = () => {

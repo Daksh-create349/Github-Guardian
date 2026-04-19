@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { client } from '../api/client';
+import { API_AUTH_LOGIN_URL } from '../api/config';
 import { useAuth } from '../context/AuthContext';
 import {
   Folder as FolderIcon,
@@ -263,7 +264,7 @@ export default function GithubDesktopPage() {
         </div>
         <button
           className="pixel-button primary"
-          onClick={() => { window.location.href = 'http://localhost:8000/api/v1/auth/login'; }}
+          onClick={() => { window.location.href = API_AUTH_LOGIN_URL; }}
           style={{
             display: 'flex', alignItems: 'center', gap: 10, marginTop: 8
           }}
