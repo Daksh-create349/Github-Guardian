@@ -230,7 +230,7 @@ export default function RepoDetailPage() {
     <div style={{ minHeight: '100vh', background: '#F8F8F8' }}>
 
       {/* Header */}
-      <div style={{ background: '#000', color: '#fff', padding: '16px 32px', display: 'flex', alignItems: 'center', gap: 16, borderBottom: '4px solid #0969DA' }}>
+      <div className="mobile-header" style={{ background: '#000', color: '#fff', padding: '16px 32px', display: 'flex', alignItems: 'center', gap: 16, borderBottom: '4px solid #0969DA' }}>
         <GitHubIcon sx={{ fontSize: '2.5rem' }} />
         <div>
           <div className="vt323" style={{ fontSize: '1.8rem', letterSpacing: 4 }}>{repoName}</div>
@@ -254,7 +254,7 @@ export default function RepoDetailPage() {
       </div>
 
       {/* Step Progress Bar */}
-      <div style={{ display: 'flex', borderBottom: '3px solid #000', background: '#fff' }}>
+      <div className="mobile-col" style={{ display: 'flex', borderBottom: '3px solid #000', background: '#fff' }}>
         {stepList.map((s, i) => {
           const isDone = i < currentStepIdx;
           const isActive = s.key === step;
@@ -305,7 +305,7 @@ export default function RepoDetailPage() {
                 <AddIcon /> CREATE NEW BRANCH
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+              <div className="responsive-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
                 <div>
                   <label className="vt323" style={{ fontSize: '1rem', display: 'block', marginBottom: 6 }}>NEW BRANCH NAME <span style={{ color: '#cf222e' }}>*</span></label>
                   <input

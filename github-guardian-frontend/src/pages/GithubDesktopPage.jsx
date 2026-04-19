@@ -596,7 +596,7 @@ export default function GithubDesktopPage() {
                 Here's what we detected and what we'll protect automatically.
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '12px', marginBottom: '24px' }}>
+              <div className="responsive-grid-4" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '12px', marginBottom: '24px' }}>
                 {[
                   { label: 'TOTAL FILES', value: files.length, color: '#0969DA' },
                   { label: 'WILL UPLOAD', value: safe.length + secrets.length + keys.length, color: '#2da44e' },

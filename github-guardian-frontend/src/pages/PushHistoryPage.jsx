@@ -81,7 +81,7 @@ export default function PushHistoryPage() {
   return (
     <div style={{ minHeight: '100vh', background: '#F8F8F8' }}>
       {/* Header */}
-      <div style={{
+      <div className="mobile-header" style={{
         background: '#000', color: '#fff', padding: '16px 32px',
         display: 'flex', alignItems: 'center', gap: 16,
         borderBottom: '4px solid #0969DA',
@@ -139,7 +139,7 @@ export default function PushHistoryPage() {
         })}
       </div>
 
-      <div style={{ padding: '32px 48px', maxWidth: 1100, margin: '0 auto' }}>
+      <div className="mobile-p-16" style={{ padding: '32px 48px', maxWidth: 1100, margin: '0 auto' }}>
 
         {/* ── GitHub Repos Tab ── */}
         {activeTab === 'repos' && (
@@ -154,7 +154,7 @@ export default function PushHistoryPage() {
                 <div className="vt323" style={{ fontSize: '2rem', color: '#666' }}>NO REPOS FOUND</div>
               </div>
             ) : (
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              <div className="responsive-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                 {repos.map(repo => {
                   const langColor = LANG_COLORS[repo.language] || '#888';
                   const pushedDate = repo.pushed_at ? new Date(repo.pushed_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Never';
@@ -189,7 +189,7 @@ export default function PushHistoryPage() {
                       )}
 
                       {/* Stats row */}
-                      <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+                      <div className="responsive-grid-4" style={{ display: 'grid', gridTemplateColumns: 'min-content min-content min-content auto', gap: 16, flexWrap: 'wrap' }}>
                         <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontFamily: 'monospace', fontSize: '0.8rem', color: '#666' }}>
                           <span style={{ width: 10, height: 10, borderRadius: '50%', background: langColor, display: 'inline-block' }} />
                           {repo.language}

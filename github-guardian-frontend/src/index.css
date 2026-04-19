@@ -114,3 +114,80 @@ body {
 .MuiTabs-indicator {
   height: 4px !important;
 }
+
+/* ==================================================
+   Responsive Utility Classes 
+================================================== */
+@media (max-width: 900px) {
+  /* Override inline flex rows that should stack on smaller screens */
+  .mobile-col {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+  
+  .mobile-col > * {
+    margin-left: 0 !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .responsive-grid-desktop {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 16px !important;
+  }
+  
+  .responsive-grid-2 {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 16px !important;
+  }
+
+  .responsive-grid-4 {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 12px !important;
+  }
+
+  .mobile-text-small {
+    font-size: 1rem !important;
+  }
+
+  .mobile-text-med {
+    font-size: 1.2rem !important;
+  }
+
+  .pixel-button {
+    font-size: 1.1rem;
+    padding: 8px 12px;
+  }
+  
+  .mobile-hide {
+    display: none !important;
+  }
+  
+  .mobile-p-16 {
+    padding: 16px !important;
+  }
+  
+  /* Shrink headers on mobile */
+  .mobile-header {
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: 12px;
+  }
+  
+  .mobile-header > div:last-child {
+    margin-left: 0 !important;
+    width: 100%;
+    flex-wrap: wrap;
+    justify-content: flex-start !important;
+    gap: 6px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .responsive-grid-4 {
+    grid-template-columns: 1fr !important;
+  }
+}
