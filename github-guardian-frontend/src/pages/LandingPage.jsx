@@ -146,6 +146,30 @@ export default function LandingPage() {
           <span style={{ fontFamily: "'VT323', monospace", fontSize: '1.5rem', opacity: 0.7 }}>→</span>
         </div>
 
+        {/* CLI Instructions CTA */}
+        <div
+          style={{
+            border: '3px solid #000', padding: '20px 28px', marginBottom: '32px',
+            background: '#F8F8F8', boxShadow: '4px 4px 0px #000', textAlign: 'left'
+          }}
+        >
+          <div style={{ fontFamily: "'VT323', monospace", fontSize: '1.8rem', letterSpacing: 3, marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '1.4rem' }}>&gt;_</span> GITHUB GUARDIAN CLI
+          </div>
+          <div style={{ fontFamily: "'VT323', monospace", fontSize: '1.3rem', opacity: 0.8, marginBottom: '16px', lineHeight: 1.2 }}>
+            INSTALL THE PRE-COMMIT SHIELD LOCALLY TO BLOCK SECRET LEAKS BEFORE YOU COMMIT.
+          </div>
+          
+          <div style={{ background: '#000', color: '#0f0', padding: '16px', fontFamily: "'VT323', monospace", fontSize: '1.3rem', marginBottom: '8px', overflowX: 'auto', whiteSpace: 'nowrap' }}>
+            <span style={{ color: '#888' }}># 1. Install globally via pipx (Mac) or pip (Windows)</span><br/>
+            <span style={{ color: '#fff' }}>$</span> pipx install github-guardian<br/><br/>
+            <span style={{ color: '#888' }}># 2. Arm the shield in any git repository</span><br/>
+            <span style={{ color: '#fff' }}>$</span> guardian hook-install<br/><br/>
+            <span style={{ color: '#888' }}># 3. Scan a directory instantly</span><br/>
+            <span style={{ color: '#fff' }}>$</span> guardian scan-local .
+          </div>
+        </div>
+
         <Box sx={{ mt: 8, display: 'flex', gap: 6, justifyContent: 'center' }}>
           <Box sx={{ textAlign: 'center' }}>
             <Typography variant="h4" className="vt323" sx={{ mb: 0.5 }}>FORENSICS</Typography>
