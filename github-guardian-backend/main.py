@@ -15,7 +15,10 @@ async def root():
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # For initial beginner deployment. Re-tighten this after launch.
+    allow_origins=[
+        "http://localhost:3000",
+        "https://github-guardian.vercel.app"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
