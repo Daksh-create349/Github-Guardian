@@ -9,7 +9,8 @@ SECRET_PATTERNS = {
     "Slack Webhook": r'https://hooks\.slack\.com/services/T[0-9A-Z]{8}/B[0-9A-Z]{8}/[0-9a-zA-Z]{24}',
     "Stripe API Key": r'sk_live_[0-9a-zA-Z]{24}',
     "Private Key": r'-----BEGIN (?:RSA|OPENSSH) PRIVATE KEY-----',
-    "Google API Key": r'AIza[0-9A-Za-z\-_]{35}'
+    "Google API Key": r'AIza[0-9A-Za-z\-_]{35}',
+    "OpenAI API Key": r'sk\s*-\s*[a-zA-Z0-9\-_]{40,}'
 }
 
 SAST_PATTERNS = {

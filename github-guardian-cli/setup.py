@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="github-guardian",
-    version="1.0.1",
+    version="1.0.2",
     description="Deep Forensic Security Audit Engine & Pre-Commit Shield",
     author="GitHub Guardian Team",
     packages=find_packages(),
