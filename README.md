@@ -100,6 +100,13 @@ GitHub Guardian includes a sophisticated terminal interface simulating a high-en
   * Automatically handles branch creation.
   * Employs AI-mediated conflict resolution: if conflicts arise during staging, an automated PR is opened and conflicts are resolved safely.
   * Initiates target branch deployments and automated merges.
+---
+
+### 🛡️ 3. The GitHub Guardian CLI (Pre-Commit Shield)
+GitHub Guardian ships with a powerful, standalone command-line interface designed to protect developers locally before code ever leaves their machine. Available directly from PyPI.
+* **Global Installation**: Install instantly via `pipx install github-guardian` (Mac/Linux) or `pip install github-guardian` (Windows).
+* **Local Forensics**: Run `guardian scan-local .` to instantly audit your directory for active leaks or SAST vulnerabilities without needing an internet connection.
+* **The Pre-Commit Shield**: Run `guardian hook-install` inside any Git repository. The CLI injects a secure Git Hook that automatically intercepts `git commit` commands. If a secret is staged, the commit is **blocked**, and the CLI intelligently asks if you'd like to auto-append the vulnerable file to your `.gitignore`.
 
 ---
 
