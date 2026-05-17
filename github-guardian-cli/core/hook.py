@@ -7,9 +7,8 @@ HOOK_SCRIPT = """#!/usr/bin/env bash
 
 echo "🛡️ GitHub Guardian: Running Pre-Commit Shield Audit..."
 
-# We use the isolated virtual environment from the CLI directory
-CLI_DIR="$(git rev-parse --show-toplevel)/github-guardian-cli"
-$CLI_DIR/venv/bin/python $CLI_DIR/guardian.py scan-local . --hook
+# Run the globally installed guardian command
+guardian scan-local . --hook
 
 if [ $? -ne 0 ]; then
     echo "❌ COMMIT BLOCKED! Secrets or semantic vulnerabilities were detected in your staging area."
