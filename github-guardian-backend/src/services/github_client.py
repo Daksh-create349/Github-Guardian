@@ -9,7 +9,7 @@ class GitHubClient:
         try:
             repo = self.g.get_repo(f"{owner}/{repo_name}")
         except Exception as e:
-            raise Exception(f"Repository '{owner}/{repo_name}' was not found on GitHub. Please check the name and your GITHUB_TOKEN permissions.")
+            raise Exception(f"GitHub API Error for '{owner}/{repo_name}': {str(e)}")
             
         commits = list(repo.get_commits()[:5])
         try:
