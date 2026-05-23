@@ -1,6 +1,5 @@
 <div align="center">
-  <img src="<img width="1024" height="1024" alt="image" src="https://github.com/user-attachments/assets/95435777-619b-46cf-83d6-8a1c175109e6" />
-" alt="Security Shield" width="120" />
+  <img src="https://i.ibb.co/vxTwvggy/76abf217-4166-4ca2-a966-5991745a0011.png" alt="Security Shield" width="120" />
   <br/>
   <h1>GitHub Guardian</h1>
   <p><strong>Deep Forensic Security Audit Engine, AI Code Interpreter, VS Code Extension, and Browser-Based GitHub Desktop Client</strong></p>
