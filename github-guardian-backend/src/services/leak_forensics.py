@@ -2,17 +2,46 @@ import re
 import tempfile
 import subprocess
 import os
+import math
 
-# Professional-grade patterns
+# Robust set of enterprise-grade patterns (parity with CLI)
 SECRET_PATTERNS = {
-    "AWS Access Key": r'AKIA[0-9A-Z]{16}',
-    "GitHub Token": r'ghp_[0-9a-zA-Z]{36}',
+    "AWS Access Key ID": r'AKIA[0-9A-Z]{16}',
+    "AWS Secret Key": r'(?i)aws_secret_access_key\s*[:=]\s*["\']?([A-Za-z0-9/+=]{40})["\']?',
+    "GitHub Token": r'gh[pousr]_[0-9a-zA-Z]{36}|github_pat_[0-9a-zA-Z]{82}',
     "Slack Webhook": r'https://hooks\.slack\.com/services/T[0-9A-Z]{8}/B[0-9A-Z]{8}/[0-9a-zA-Z]{24}',
-    "Stripe API Key": r'sk_live_[0-9a-zA-Z]{24}',
-    "Private Key": r'-----BEGIN (?:RSA|OPENSSH) PRIVATE KEY-----',
-    "Google API Key": r'AIza[0-9A-Za-z\\-_]{35}',
-    "OpenAI API Key": r'sk\s*-\s*[a-zA-Z0-9\-_]{40,}'
+    "Slack Token": r'xox[bapr]-[0-9a-zA-Z]{10,48}',
+    "Stripe API Key": r'[rs]k_(?:live|test)_[0-9a-zA-Z]{24,32}',
+    "Google API Key": r'AIza[0-9A-Za-z\-_]{35}',
+    "OpenAI API Key": r'sk-[a-zA-Z0-9]{20,}|sk\s*-\s*[a-zA-Z0-9\-_]{40,}',
+    "Twilio Account SID": r'AC[0-9a-fA-F]{32}',
+    "Twilio Auth Token": r'(?i)twilio_auth_token\s*[:=]\s*["\']?([0-9a-fA-F]{32})["\']?',
+    "Discord Webhook": r'https://discord(?:app)?\.com/api/webhooks/[0-9]+/[0-9a-zA-Z_-]+',
+    "Discord Bot Token": r'[MN][A-Za-z0-9_]{23}\.[A-Za-z0-9_]{6}\.[A-Za-z0-9_]{27}',
+    "Telegram Bot Token": r'[0-9]{9,10}:[a-zA-Z0-9_-]{35}',
+    "Heroku API Key": r'[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}',
+    "Mailgun API Key": r'key-[0-9a-zA-Z]{32}',
+    "SendGrid API Key": r'SG\.[0-9a-zA-Z_-]{22}\.[0-9a-zA-Z_-]{43}',
+    "Facebook Access Token": r'EAACEdEose0c[0-9A-Za-z]+',
+    "Database URL": r'(?:mongodb(?:\+srv)?|postgres|postgresql|mysql|mssql|redis):\/\/[^:\s]+:[^@\s]+@[^@\s]+',
+    "Private Key": r'-----BEGIN (?:RSA|OPENSSH|DSA|EC|PGP)? PRIVATE KEY-----',
+    "JWT": r'eyJ[a-zA-Z0-9_-]+\.eyJ[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+',
+    "NPM Token": r'npm_[0-9a-zA-Z]{36}'
 }
+
+GENERIC_ASSIGNMENT_PATTERN = re.compile(
+    r"(?i)\b['\"]?([a-z0-9_\-\.]*(?:key|secret|token|password|passwd|pw|auth|cred|pass|db|uri|url)[a-z0-9_\-\.]*)['\"]?\s*[:=]\s*['\"]([a-zA-Z0-9_\-\.\/\+=]{16,})['\"]"
+)
+
+def calculate_entropy(s: str) -> float:
+    if not s:
+        return 0.0
+    entropy = 0.0
+    for x in range(256):
+        p_x = float(s.count(chr(x))) / len(s)
+        if p_x > 0:
+            entropy += - p_x * math.log(p_x, 2)
+    return entropy
 
 def scan_for_secrets(text: str) -> list:
     if not text:
@@ -20,15 +49,30 @@ def scan_for_secrets(text: str) -> list:
     findings = []
     matched_secrets = set()
     
-    for name, pattern in SECRET_PATTERNS.items():
-        matches = re.findall(pattern, text)
-        for match in matches:
-            if match not in matched_secrets:
-                matched_secrets.add(match)
-                findings.append({
-                    "pattern_matched": name, 
-                    "secret_redacted": str(match)[:6] + "..." + str(match)[-4:]
-                })
+    for line in text.splitlines():
+        matched_any = False
+        for name, pattern in SECRET_PATTERNS.items():
+            m = re.search(pattern, line)
+            if m:
+                val = m.group(1) if m.groups() else m.group(0)
+                if val and val not in matched_secrets:
+                    matched_secrets.add(val)
+                    findings.append({
+                        "pattern_matched": name, 
+                        "secret_redacted": str(val)[:6] + "..." + str(val)[-4:]
+                    })
+                    matched_any = True
+                    
+        if not matched_any:
+            gen_match = GENERIC_ASSIGNMENT_PATTERN.search(line)
+            if gen_match:
+                val = gen_match.group(2)
+                if val and val not in matched_secrets and calculate_entropy(val) >= 3.2:
+                    matched_secrets.add(val)
+                    findings.append({
+                        "pattern_matched": f"High-Entropy Secret ({gen_match.group(1)})",
+                        "secret_redacted": str(val)[:6] + "..." + str(val)[-4:]
+                    })
     return findings
 
 def scan_git_history(owner: str, repo_name: str):
@@ -39,23 +83,58 @@ def scan_git_history(owner: str, repo_name: str):
         # 1. Shallow clone current state
         subprocess.run(["git", "clone", "--depth", "50", repo_url, td], capture_output=True, check=False)
         
-        # 2. Scan active files (current tree)
-        # We use git grep -n as it's lightning fast and gives line numbers
-        for name, pattern in SECRET_PATTERNS.items():
-            res = subprocess.run(["git", "-C", td, "grep", "-n", "-E", pattern], capture_output=True, text=True, check=False)
-            if res.stdout:
-                for line in res.stdout.splitlines():
-                    # Format with -n: filename:line_number:matching_text
-                    parts = line.split(':', 2)
-                    if len(parts) >= 2:
-                        file_name = parts[0]
-                        line_num = int(parts[1]) if len(parts) >= 3 and parts[1].isdigit() else None
-                        findings.append({
-                            "pattern_matched": name,
-                            "commit_sha": f"Live:{file_name}",
-                            "line": line_num,
-                            "secret_redacted": "REDACTED (Active File)"
-                        })
+        # 2. Scan active files (current tree) using Python walker for parity
+        for root, _, files in os.walk(td):
+            split_dirs = root.split(os.sep)
+            if any(x in split_dirs for x in [".git", "node_modules", "venv", ".venv", "build_env", "dist", "build", "__pycache__"]):
+                continue
+            for file in files:
+                ext = os.path.splitext(file)[1].lower()
+                if ext in [
+                    ".png", ".jpg", ".jpeg", ".gif", ".svg", ".ico", 
+                    ".pdf", ".zip", ".gz", ".tar", ".pyc", ".exe", 
+                    ".dll", ".so", ".dylib", ".woff", ".woff2", ".ttf", ".eot",
+                    ".tldr", ".drawio", ".map", ".mp3", ".mp4", ".mov", ".wav"
+                ]: 
+                    continue
+                    
+                if file.lower() in ["package-lock.json", "yarn.lock", "pnpm-lock.yaml", "poetry.lock", "cargo.lock", "composer.lock"]:
+                    continue
+                    
+                # Skip the backend's own scanner script if it clones itself or exists
+                if file in ["scanner.py", "leak_forensics.py", "sast_analyzer.py"]:
+                    continue
+                filepath = os.path.join(root, file)
+                try:
+                    with open(filepath, 'r', encoding='utf-8', errors='ignore') as f:
+                        lines = f.readlines()
+                    for line_idx, line in enumerate(lines, 1):
+                        matched_any = False
+                        for name, pat in SECRET_PATTERNS.items():
+                            m = re.search(pat, line)
+                            if m:
+                                val = m.group(1) if m.groups() else m.group(0)
+                                findings.append({
+                                    "pattern_matched": name,
+                                    "commit_sha": f"Live:{os.path.relpath(filepath, td)}",
+                                    "line": line_idx,
+                                    "secret_redacted": str(val)[:6] + "..." + str(val)[-4:]
+                                })
+                                matched_any = True
+                        
+                        if not matched_any:
+                            gen_match = GENERIC_ASSIGNMENT_PATTERN.search(line)
+                            if gen_match:
+                                val = gen_match.group(2)
+                                if calculate_entropy(val) >= 3.2:
+                                    findings.append({
+                                        "pattern_matched": f"High-Entropy Secret ({gen_match.group(1)})",
+                                        "commit_sha": f"Live:{os.path.relpath(filepath, td)}",
+                                        "line": line_idx,
+                                        "secret_redacted": str(val)[:6] + "..." + str(val)[-4:]
+                                    })
+                except Exception:
+                    pass
 
         # 3. Check for Sensitive Files (Exposure Scan)
         SENSITIVE_FILES = [".env", "docker-compose.yml", "kubeconfig", "id_rsa", "config.json", "settings.py"]
@@ -71,7 +150,6 @@ def scan_git_history(owner: str, repo_name: str):
                     })
 
         # 4. Scan commit history diffs (last 50 commits)
-        # BUG FIX: Added missing log command to prevent NameError
         log_res = subprocess.run(
             ["git", "-C", td, "log", "-p", "-n", "50"], 
             capture_output=True, text=True, check=False, timeout=60
@@ -82,13 +160,14 @@ def scan_git_history(owner: str, repo_name: str):
             diff_findings = scan_for_secrets(added_lines)
             for df in diff_findings:
                 df["commit_sha"] = "Historical (Commit History)"
+                df["line"] = None
                 findings.append(df)
 
-    # Deduplicate findings by redacted secret + pattern
+    # Deduplicate findings by redacted secret + pattern + location/sha
     unique_findings = []
     seen = set()
     for f in findings:
-        key = f"{f['pattern_matched']}:{f['secret_redacted']}"
+        key = f"{f['pattern_matched']}:{f['secret_redacted']}:{f.get('commit_sha')}:{f.get('line')}"
         if key not in seen:
             seen.add(key)
             unique_findings.append(f)

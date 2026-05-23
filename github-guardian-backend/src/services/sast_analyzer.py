@@ -9,7 +9,7 @@ SAST_PATTERNS = [
         "id": "SQLI_RAW_QUERY",
         "name": "Potential SQL Injection (Raw Query)",
         "patterns": [
-            r"\.execute\(\".*%\s*\"", # Python/JS style % interpolation
+            r"\.execute\(\s*['\"].*['\"]\s*%\s*", # Python/JS style % interpolation
             r"\.query\(\".*\$\{.*\}\"\)", # JS Template Literals in query
             r"SELECT .* FROM .* WHERE .* \+ .*", # Basic string concat
         ],

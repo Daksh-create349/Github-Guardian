@@ -1,0 +1,67 @@
+{
+  "name": "github-guardian-vscode",
+  "displayName": "GitHub Guardian",
+  "description": "Real-time secret leak detection & SAST vulnerability scanner with inline diagnostics, Quick Fixes, and workspace scanning.",
+  "version": "1.0.1",
+  "publisher": "DakshSrivastava",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Daksh-create349/Github-Guardian"
+  },
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "categories": [
+    "Linters",
+    "Other"
+  ],
+  "keywords": [
+    "secrets",
+    "security",
+    "leak",
+    "credentials",
+    "audit",
+    "sast",
+    "api-key",
+    "pre-commit"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "icon": "icon.png",
+  "main": "./extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "github-guardian.scanWorkspace",
+        "title": "GitHub Guardian: Scan Workspace for Secrets"
+      }
+    ],
+    "configuration": {
+      "title": "GitHub Guardian",
+      "properties": {
+        "github-guardian.enable": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable or disable live GitHub Guardian scanning."
+        },
+        "github-guardian.enableOnSave": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically scan and update diagnostics when saving."
+        },
+        "github-guardian.enableOnType": {
+          "type": "boolean",
+          "default": true,
+          "description": "Update diagnostics as you type (de-bounced 500ms)."
+        },
+        "github-guardian.entropyThreshold": {
+          "type": "number",
+          "default": 3.2,
+          "description": "Shannon Entropy threshold for flagging generic custom secret assignments. Higher = fewer false positives."
+        }
+      }
+    }
+  }
+}

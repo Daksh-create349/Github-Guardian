@@ -170,6 +170,32 @@ export default function LandingPage() {
           </div>
         </div>
 
+        {/* VS Code Extension CTA */}
+        <div
+          style={{
+            border: '3px solid #000', padding: '20px 28px', marginBottom: '32px',
+            background: '#F8F8F8', boxShadow: '4px 4px 0px #000', textAlign: 'left'
+          }}
+        >
+          <div style={{ fontFamily: "'VT323', monospace", fontSize: '1.8rem', letterSpacing: 3, marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '1.5rem' }}>🔌</span> VS CODE EXTENSION
+          </div>
+          <div style={{ fontFamily: "'VT323', monospace", fontSize: '1.3rem', opacity: 0.8, marginBottom: '16px', lineHeight: 1.2 }}>
+            REAL-TIME SECRET SHIELD, QUICK FIX REDACTIONS, AND WORKSPACE AUDITS DIRECTLY IN VS CODE.
+          </div>
+          
+          <div style={{ background: '#000', color: '#0f0', padding: '16px', fontFamily: "'VT323', monospace", fontSize: '1.25rem', marginBottom: '8px', lineHeight: 1.4 }}>
+            <span style={{ color: '#888' }}># 1. Install extension from VS Code marketplace</span><br/>
+            <span style={{ color: '#fff' }}>🔍</span> Search for "GitHub Guardian" and click Install<br/><br/>
+            
+            <span style={{ color: '#888' }}># 2. Key features at your service</span><br/>
+            <span style={{ color: '#0ff' }}>✓ Live scanning:</span> Instant inline alerts as you type or save<br/>
+            <span style={{ color: '#0ff' }}>✓ Quick Fixes:</span> Hover & click 💡 to redact/reference variables<br/>
+            <span style={{ color: '#0ff' }}>✓ SAST Audits:</span> Detect raw SQL, insecure XSS, & hardcoded auth<br/>
+            <span style={{ color: '#0ff' }}>✓ Workspace Scan:</span> Run workspace audit via 🛡️ status bar or Cmd+Shift+P
+          </div>
+        </div>
+
         <Box sx={{ mt: 8, display: 'flex', gap: 6, justifyContent: 'center' }}>
           <Box sx={{ textAlign: 'center' }}>
             <Typography variant="h4" className="vt323" sx={{ mb: 0.5 }}>FORENSICS</Typography>

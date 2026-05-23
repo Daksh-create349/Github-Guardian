@@ -1,0 +1,4 @@
+.vscode/**
+test-extension.js
+.gitignore
+*.vsix
