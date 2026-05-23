@@ -1,8 +1,8 @@
 <div align="center">
   <img src="https://raw.githubusercontent.com/github/explore/80688e429a7d4ef2fca1e82350fe8e3517d3494d/topics/security/security.png" alt="Security Shield" width="120" />
   <br/>
-  <h1>🛡️ GitHub Guardian</h1>
-  <p><strong>Deep Forensic Security Audit Engine, AI Code Interpreter & Browser-Based GitHub Desktop Client</strong></p>
+  <h1>GitHub Guardian</h1>
+  <p><strong>Deep Forensic Security Audit Engine, AI Code Interpreter, VS Code Extension, and Browser-Based GitHub Desktop Client</strong></p>
 
   [![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
   [![React](https://img.shields.io/badge/React-20232a?style=for-the-badge&logo=react&logoColor=61DAFB)](https://reactjs.org/)
@@ -15,17 +15,17 @@
 
 ---
 
-## ⚡ Introduction
+## Introduction
 
-**GitHub Guardian** is an enterprise-grade, high-fidelity security auditing and repository manager built to resolve the pervasive "signal-to-noise" challenge in modern DevSecOps. Traditional static scanners overwhelm development teams with low-priority warnings. GitHub Guardian introduces **Forensic-Level Impact Auditing**—combining live credential scan patterns, Git history DAG traversal, AST-like semantic checks, dependency confusion registry verification, CI/CD misconfiguration scans, and Syft/Grype supply chain SBOM generators.
+GitHub Guardian is an enterprise-grade, high-fidelity security auditing and repository manager built to resolve the pervasive "signal-to-noise" challenge in modern DevSecOps. Traditional static scanners overwhelm development teams with low-priority warnings. GitHub Guardian introduces Forensic-Level Impact Auditing—combining live credential scan patterns, Git history DAG traversal, AST-like semantic checks, dependency confusion registry verification, CI/CD misconfiguration scans, and Syft/Grype supply chain SBOM generators.
 
-All scan findings are enriched via an **AI Technical Reviewer** (powered by OpenAI `gpt-4o-mini`) that analyzes repository code structures—including Jupyter Notebooks (`.ipynb` files)—to produce structural architectural analyses and actionable remediation blueprints.
+All scan findings are enriched via an AI Technical Reviewer (powered by OpenAI gpt-4o-mini) that analyzes repository code structures—including Jupyter Notebooks (.ipynb files)—to produce structural architectural analyses and actionable remediation blueprints.
 
-Additionally, GitHub Guardian includes a built-in **GitHub Desktop Portal**: a custom, neo-retro themed web UI that securely integrates with GitHub OAuth, enabling developers to stage local files, generate bulletproof `.gitignore` definitions to prevent leaks *before* they occur, manage branches, and push code synchronously or via AI-mediated pull-requests with automated conflict resolution.
+Additionally, GitHub Guardian includes a built-in GitHub Desktop Portal (a custom, neo-retro themed web UI that securely integrates with GitHub OAuth, enabling developers to stage local files, generate bulletproof .gitignore definitions to prevent leaks before they occur, manage branches, and push code synchronously or via AI-mediated pull-requests with automated conflict resolution) and a fully integrated VS Code Extension providing real-time scanning, workspace audits, and one-click Quick Fixes directly in the editor.
 
 ---
 
-## 📐 Systems Architecture & Pipeline
+## Systems Architecture and Pipeline
 
 GitHub Guardian is built on a decoupled, asynchronous micro-architecture designed for performance, high throughput, and maximum visibility.
 
@@ -50,83 +50,99 @@ graph TD
     I -->|Query Polling / Results| B
 ```
 
-### 🧠 Non-Linear Scoring & Alert Fatigue Prevention
+### Non-Linear Scoring and Alert Fatigue Prevention
 Rather than linearly summing up scores (which quickly blows past maximum limits and creates alert fatigue), the engine implements a dampened weight-based scoring curve:
 
-$$\text{Final Score} = 10 \times \left(1 - 0.85^{\frac{\text{raw\_score}}{2}}\right)$$
+Final Score = 10 * (1 - 0.85^(raw_score / 2))
 
-#### **Raw Weights Allocation:**
-- **Active Credentials Leak**: $5$ points (CRITICAL)
-- **Historical Git History Leak**: $2$ points (HIGH)
-- **Semantic Code Injection (SQLi/XSS)**: $4$ points (CRITICAL) / $2$ points (HIGH)
-- **CI/CD Misconfigurations (`pull_request_target`)**: $4$ points (CRITICAL)
-- **Dependency Confusion Vulnerability**: $3$ points (HIGH)
-- **Critical CVE Supply Chain Vulnerability**: $3$ points (MEDIUM)
+#### Raw Weights Allocation:
+- Active Credentials Leak: 5 points (CRITICAL)
+- Historical Git History Leak: 2 points (HIGH)
+- Semantic Code Injection (SQLi/XSS): 4 points (CRITICAL) / 2 points (HIGH)
+- CI/CD Misconfigurations (pull_request_target): 4 points (CRITICAL)
+- Dependency Confusion Vulnerability: 3 points (HIGH)
+- Critical CVE Supply Chain Vulnerability: 3 points (MEDIUM)
 
-#### **Qualitative Scoring Scale:**
-* **`0.0`**: `EXCELLENT` — Forensic-grade security posture. No indicators of compromise or architectural flaws.
-* **`1.0 - 3.9`**: `CAUTION` — Minor exposure or historical code smells detected.
-* **`4.0 - 6.9`**: `WARNING` — Significant security debt; critical vulnerabilities detected.
-* **`7.0 - 8.9`**: `EMERGENCY` — Major structural vulnerabilities; exploitation is highly probable.
-* **`9.0 - 10.0`**: `CATASTROPHIC` — Total system compromise; multiple secrets exposed and entry points open.
+#### Qualitative Scoring Scale:
+- 0.0: EXCELLENT — Forensic-grade security posture. No indicators of compromise or architectural flaws.
+- 1.0 - 3.9: CAUTION — Minor exposure or historical code smells detected.
+- 4.0 - 6.9: WARNING — Significant security debt; critical vulnerabilities detected.
+- 7.0 - 8.9: EMERGENCY — Major structural vulnerabilities; exploitation is highly probable.
+- 9.0 - 10.0: CATASTROPHIC — Total system compromise; multiple secrets exposed and entry points open.
 
 ---
 
-## 🚀 Key Features Deep Dive
+## Key Features Deep Dive
 
-### 🛡️ 1. The Multi-Layered Security Auditor
+### 1. The Multi-Layered Security Auditor
 The core auditing runner parses repositories across seven specialized analysis sectors:
-* **Leak Forensics**: Scans active files and checks git history (deep logs) using strict regular expressions to hunt down:
-  * *AWS Access Keys*, *GitHub Tokens*, *Slack Webhooks*, *Stripe API Keys*, *Google API Keys*, and *RSA/OpenSSH Private Keys*.
-  * Recognizes high-risk exposed configuration assets such as `.env`, `docker-compose.yml`, `kubeconfig`, `id_rsa`, `config.json`, and `.pem`/`.key` cryptographic assets.
-* **"OOPS" Commit History Traversal**: Traverses Git history patch diffs to isolate deleted lines (prefixed with `-`). This allows developers to detect secrets that were accidentally committed, deleted in a subsequent commit, but remain fully retrievable within the Git packfile history.
-* **Semantic SAST Engine**: A file-by-file pattern matching engine checking code patterns across Python, JS/TS, Java, PHP, HTML, and C:
-  * **SQL Injection (SQLi)**: Catches string interpolation/concatenation in raw SQL executing pipelines (e.g. `.execute()`, `.query()`).
-  * **Cross-Site Scripting (XSS)**: Isolates insecure DOM writing vectors (e.g. React `dangerouslySetInnerHTML`, Vanilla `innerHTML`, Jinja `| safe` filter).
-  * **Shell Injection**: Flags dangerous subprocessing (e.g. `shell=True`, Node's `child_process.exec()`).
-  * **Hardcoded Credentials**: Detects assignments of raw string variables containing passwords or JWT secrets.
-* **Dependency Confusion Scanner**: Safely checks `package.json` configurations. If NPM dependencies feature internal naming patterns or company scopes (e.g., `@company/internal-pkg`) but 404 on the public npmjs registry, the auditor warns developers of potential public registry squatting risks.
-* **CI/CD Workflow Auditor**: Parses GitHub Actions `.github/workflows/*.yaml` configuration trees to flag insecure workflow triggers like `pull_request_target` which can allow malicious pull requests to read repository secrets.
-* **Supply Chain SBOM Scanner**: Spawns native instances of **Syft** to extract a CycloneDX JSON Software Bill of Materials (SBOM) from a cloned repository directory and uses **Grype** to run high-speed localized CVE matching.
-* **Access Auditor**: Checks deploy keys to flag stale credentials active for over 90 days and reports on missing default branch protection rules.
+- Leak Forensics: Scans active files and checks git history (deep logs) using strict regular expressions to hunt down:
+  - AWS Access Keys, GitHub Tokens, Slack Webhooks, Stripe API Keys, Google API Keys, and RSA/OpenSSH Private Keys.
+  - Recognizes high-risk exposed configuration assets such as .env, docker-compose.yml, kubeconfig, id_rsa, config.json, and .pem/.key cryptographic assets.
+- "OOPS" Commit History Traversal: Traverses Git history patch diffs to isolate deleted lines (prefixed with -). This allows developers to detect secrets that were accidentally committed, deleted in a subsequent commit, but remain fully retrievable within the Git packfile history.
+- Semantic SAST Engine: A file-by-file pattern matching engine checking code patterns across Python, JS/TS, Java, PHP, HTML, and C:
+  - SQL Injection (SQLi): Catches string interpolation/concatenation in raw SQL executing pipelines (e.g. .execute(), .query()).
+  - Cross-Site Scripting (XSS): Isolates insecure DOM writing vectors (e.g. React dangerouslySetInnerHTML, Vanilla innerHTML, Jinja | safe filter).
+  - Shell Injection: Flags dangerous subprocessing (e.g. shell=True, Node's child_process.exec()).
+  - Hardcoded Credentials: Detects assignments of raw string variables containing passwords or JWT secrets.
+- Dependency Confusion Scanner: Safely checks package.json configurations. If NPM dependencies feature internal naming patterns or company scopes (e.g., @company/internal-pkg) but 404 on the public npmjs registry, the auditor warns developers of potential public registry squatting risks.
+- CI/CD Workflow Auditor: Parses GitHub Actions .github/workflows/*.yaml configuration trees to flag insecure workflow triggers like pull_request_target which can allow malicious pull requests to read repository secrets.
+- Supply Chain SBOM Scanner: Spawns native instances of Syft to extract a CycloneDX JSON Software Bill of Materials (SBOM) from a cloned repository directory and uses Grype to run high-speed localized CVE matching.
+- Access Auditor: Checks deploy keys to flag stale credentials active for over 90 days and reports on missing default branch protection rules.
 
 ---
 
-### 💻 2. The Browser-Based GitHub Desktop Portal
+### 2. The Browser-Based GitHub Desktop Portal
 GitHub Guardian includes a sophisticated terminal interface simulating a high-end mainframe that integrates with GitHub OAuth.
-* **Drag-and-Drop Staging**: Stage codebases directly in the web browser.
-* **Dynamic `.gitignore` Synthesizer**: Scans your staged files on-the-fly. If it detects unignored `.env` items, credentials, `.pem` keys, or massive folders like `node_modules`, it automatically generates a customized `.gitignore` configuration to lock down files prior to committing.
-* **Smart Push Protocols**: Pushes to existing repositories using advanced flows:
-  * Automatically handles branch creation.
-  * Employs AI-mediated conflict resolution: if conflicts arise during staging, an automated PR is opened and conflicts are resolved safely.
-  * Initiates target branch deployments and automated merges.
+- Drag-and-Drop Staging: Stage codebases directly in the web browser.
+- Dynamic .gitignore Synthesizer: Scans your staged files on-the-fly. If it detects unignored .env items, credentials, .pem keys, or massive folders like node_modules, it automatically generates a customized .gitignore configuration to lock down files prior to committing.
+- Smart Push Protocols: Pushes to existing repositories using advanced flows:
+  - Automatically handles branch creation.
+  - Employs AI-mediated conflict resolution: if conflicts arise during staging, an automated PR is opened and conflicts are resolved safely.
+  - Initiates target branch deployments and automated merges.
+
 ---
 
-### 🛡️ 3. The GitHub Guardian CLI (Pre-Commit Shield)
+### 3. The GitHub Guardian CLI (Pre-Commit Shield)
 GitHub Guardian ships with a powerful, standalone command-line interface designed to protect developers locally before code ever leaves their machine. Available directly from PyPI.
-* **Global Installation**: Install instantly via `pipx install github-guardian` (Mac/Linux) or `pip install github-guardian` (Windows).
-* **Local Forensics**: Run `guardian scan-local .` to instantly audit your directory for active leaks or SAST vulnerabilities without needing an internet connection.
-* **The Pre-Commit Shield**: Run `guardian hook-install` inside any Git repository. The CLI injects a secure Git Hook that automatically intercepts `git commit` commands. If a secret is staged, the commit is **blocked**, and the CLI intelligently asks if you'd like to auto-append the vulnerable file to your `.gitignore`.
+- Global Installation: Install instantly via pipx install github-guardian (Mac/Linux) or pip install github-guardian (Windows).
+- Local Forensics: Run guardian scan-local . to instantly audit your directory for active leaks or SAST vulnerabilities without needing an internet connection.
+- The Pre-Commit Shield: Run guardian hook-install inside any Git repository. The CLI injects a secure Git Hook that automatically intercepts git commit commands. If a secret is staged, the commit is blocked, and the CLI intelligently asks if you'd like to auto-append the vulnerable file to your .gitignore.
 
 ---
 
-## 🛠️ Tech Stack & Directory Architecture
+### 4. The GitHub Guardian VS Code Extension
+The official GitHub Guardian VS Code Extension brings forensic-level secret detection and security checks directly into the developer's primary IDE.
 
-### **Backend Core:**
-* **FastAPI**: Asynchronous web framework serving REST endpoints.
-* **SQLAlchemy & SQLite**: Internal session DB and push tracker.
-* **PyGithub**: Python wrapper for interacting with the official GitHub API.
-* **Syft & Grype**: Binary-level utilities for SBOM generation and CVE matching.
-* **OpenAI (GPT-4o-Mini)**: Architectural code reviewer and insights generator.
-
-### **Frontend Core:**
-* **React + Vite**: Ultra-fast SPA configuration.
-* **Material UI (MUI)**: Dark-themed components configured with mainframe terminal aesthetics.
-* **VT323 Typography**: Authentic retro computer terminal visuals.
+- Live Inline Diagnostics: Real-time, debounced (500ms) background scanning highlights security vulnerabilities inside the editor:
+  - Red underlays indicate critical credential leaks (e.g. AWS access keys, GitHub tokens, database URIs, Stripe, Slack, Twilio keys).
+  - Yellow underlays identify SAST issues (e.g. raw SQL execute statements, React dangerouslySetInnerHTML, hardcoded passwords).
+- Automated Quick Fixes: Clicking on a flagged secret opens the Quick Fix lightbulb menu (Cmd + . or Ctrl + .), allowing developers to resolve the issue with one click:
+  - Redact Secret: Instantly replaces the sensitive value with "REDACTED_BY_GUARDIAN".
+  - Replace with process.env Reference: Migrates the hardcoded key to a process.env reference, keeping the secret out of version control.
+- Workspace-Wide Scans: Trigger a thorough, progress-tracked scan of all files in the current workspace directory by clicking the status bar item or executing the "GitHub Guardian: Scan Workspace for Secrets" command in the Command Palette (Cmd + Shift + P).
+- Extensible Settings: Adjust the Shannon Entropy sensitivity (default threshold: 3.2) or toggle specific features (scan on type, scan on save) in the standard VS Code settings tab.
+- Zero-Dependency Execution: Runs as a native Node.js module without requiring global runtime installations or network access, ensuring complete privacy.
 
 ---
 
-### 📁 Codebase Directory Tree
+## Tech Stack and Directory Architecture
+
+### Backend Core:
+- FastAPI: Asynchronous web framework serving REST endpoints.
+- SQLAlchemy & SQLite: Internal session DB and push tracker.
+- PyGithub: Python wrapper for interacting with the official GitHub API.
+- Syft & Grype: Binary-level utilities for SBOM generation and CVE matching.
+- OpenAI (GPT-4o-Mini): Architectural code reviewer and insights generator.
+
+### Frontend Core:
+- React + Vite: Ultra-fast SPA configuration.
+- Material UI (MUI): Dark-themed components configured with mainframe terminal aesthetics.
+- VT323 Typography: Authentic retro computer terminal visuals.
+
+---
+
+### Codebase Directory Tree
 
 ```
 Crazy-ever/
@@ -163,30 +179,38 @@ Crazy-ever/
 │           ├── sast_analyzer.py       # Semantic SAST regex scans (SQLi, XSS)
 │           └── supply_chain.py        # Invokes Syft/Grype for CVE vulnerability scans
 │
-└── github-guardian-frontend/          # React + Vite Mainframe Application
-    ├── package.json                   # Dependency definitions
-    ├── vite.config.js                 # Local Vite configurations (Runs on Port 3000)
-    ├── index.html                     # SPA Entrypoint HTML
-    └── src/
-        ├── App.jsx                    # React Routing Rules
-        ├── theme.js                   # MUI Retro Theme
-        ├── main.jsx                   # React mounting script
-        ├── index.css                  # Custom retro CSS styles
-        ├── context/
-        │   └── AuthContext.jsx        # OAuth User context manager
-        └── pages/
-            ├── LandingPage.jsx        # Home terminal landing page
-            ├── DashboardPage.jsx      # Multi-panel scan overview (Auditor view)
-            ├── RepoDetailPage.jsx     # Branch, push, and single repo control panel
-            ├── PushHistoryPage.jsx    # Log of recent push events
-            └── GithubDesktopPage.jsx  # Main browser-based Git Desktop interface
+├── github-guardian-frontend/          # React + Vite Mainframe Application
+│   ├── package.json                   # Dependency definitions
+│   ├── vite.config.js                 # Local Vite configurations (Runs on Port 3000)
+│   ├── index.html                     # SPA Entrypoint HTML
+│   └── src/
+│       ├── App.jsx                    # React Routing Rules
+│       ├── theme.js                   # MUI Retro Theme
+│       ├── main.jsx                   # React mounting script
+│       ├── index.css                  # Custom retro CSS styles
+│       ├── context/
+│       │   └── AuthContext.jsx        # OAuth User context manager
+│       └── pages/
+│           ├── LandingPage.jsx        # Home terminal landing page
+│           ├── DashboardPage.jsx      # Multi-panel scan overview (Auditor view)
+│           ├── RepoDetailPage.jsx     # Branch, push, and single repo control panel
+│           ├── PushHistoryPage.jsx    # Log of recent push events
+│           └── GithubDesktopPage.jsx  # Main browser-based Git Desktop interface
+│
+└── github-guardian-vscode/            # GitHub Guardian VS Code Extension
+    ├── README.md                      # Extension Usage Instructions
+    ├── extension.js                   # Diagnostics, Quick Fix & Workspace scan logic
+    ├── package.json                   # VS Code Extension manifest & commands
+    ├── test-extension.js              # Mock unit test suite
+    ├── .vscodeignore                  # Packaged file filter configurations
+    └── icon.png                       # Pixel-art visual mascot logo
 ```
 
 ---
 
-## 📡 API Contract Specification
+## API Contract Specification
 
-All backend endpoints are structured under the `/api/v1` namespace.
+All backend endpoints are structured under the /api/v1 namespace.
 
 | Category | HTTP Method | Endpoint | Authorization | Payload / Parameters | Responsibility |
 | :--- | :--- | :--- | :---: | :--- | :--- |
@@ -200,18 +224,18 @@ All backend endpoints are structured under the `/api/v1` namespace.
 | **GitHub Desktop** | `POST` | `/api/v1/desktop/smart-push` | Bearer (JWT) | Form-Data: `repo_name`, `commit_message`, `files` | Scans files, commits changes, creates auto PR, resolves conflicts via AI, and merges. |
 | **GitHub Desktop** | `GET` | `/api/v1/desktop/github-repos` | Bearer (JWT) | None | Fetches all authorized GitHub repositories directly from the GitHub API. |
 | **GitHub Desktop** | `GET` | `/api/v1/desktop/branches/{repo_name}`| Bearer (JWT) | Path Parameter: `repo_name` | Fetches active branches list including last commit data and SHA signatures. |
-| **GitHub Desktop** | `POST` | `/api/v1/desktop/create-branch` | Bearer (JWT) | Form-Data: `repo_name`, `new_branch_name`, `base_branch` | Creates a new Git branch based on an existing branch on the remote tree. |
+| **GitHub Desktop** | `POST` | `/api/v1/desktop/create-branch` | Bearer (JWT) | Form-Data: `repo_name`, `new_branch_name`, `base_branch` | Creates a new Git branch based on an existing remote branch. |
 | **GitHub Desktop** | `POST` | `/api/v1/desktop/push-to-branch` | Bearer (JWT) | Form-Data: `repo_name`, `branch_name`, `commit_message`, `files` | Pushes staged file payloads directly into the targeted branch. |
 | **GitHub Desktop** | `POST` | `/api/v1/desktop/merge-branch` | Bearer (JWT) | Form-Data: `repo_name`, `source_branch`, `target_branch` | Checks branch conflicts, resolves them via AI, opens PR, and merges. |
 | **GitHub Desktop** | `GET` | `/api/v1/desktop/history` | Bearer (JWT) | None | Fetches local SQLite DB history logs of desktop pushes. |
 
 ---
 
-## ⚙️ Environment Variables Configuration
+## Environment Variables Configuration
 
 Set up environment variables for both backend and frontend to ensure database operations, OpenAI analysis, and OAuth integrations execute properly.
 
-### 🐍 1. Backend Configuration (`github-guardian-backend/.env`)
+### 1. Backend Configuration (`github-guardian-backend/.env`)
 Create a file named `.env` in the `github-guardian-backend` root folder:
 
 ```env
@@ -237,7 +261,7 @@ SLACK_WEBHOOK_URL=https://hooks.slack.com/services/Your/Slack/Webhook
 WEBHOOK_SECRET=mySuperSecretGuardianKey2026
 ```
 
-### ⚡ 2. Frontend Configuration (`github-guardian-frontend/.env.local`)
+### 2. Frontend Configuration (`github-guardian-frontend/.env.local`)
 Create a file named `.env.local` in the `github-guardian-frontend` root folder:
 
 ```env
@@ -247,20 +271,20 @@ VITE_API_BASE_URL=http://localhost:8000
 
 ---
 
-## 🚀 Setting Up the Application
+## Setting Up the Application
 
-### 📋 Prerequisites
+### Prerequisites
 Before launching, ensure the following are installed:
-1. **Python 3.10+** (with virtual environment capability)
-2. **Node.js 18+** & **npm**
-3. **Syft & Grype** (Optional, for native container SBOM scans)
+1. Python 3.10+ (with virtual environment capability)
+2. Node.js 18+ & npm
+3. Syft & Grype (Optional, for native container SBOM scans)
    ```bash
    brew install syft grype
    ```
 
 ---
 
-### 🕹️ Option A: Manual Setup (Step-by-Step)
+### Option A: Manual Setup (Step-by-Step)
 
 #### **1. Database & Backend API Setup**
 ```bash
@@ -297,7 +321,7 @@ Open your browser and navigate to `http://localhost:3000` to interact with the c
 
 ---
 
-### 🥾 Option B: Automated Bootstrapping
+### Option B: Automated Bootstrapping
 The repository includes pre-configured automation scripts (`bootstrap.py` and `frontend-bootstrap.py`) in the workspace root. You can run these to stage environment structures and configure modules automatically.
 
 ```bash
@@ -310,15 +334,15 @@ python frontend-bootstrap.py
 
 ---
 
-## 🧪 Testing the Auditor
+## Testing the Auditor
 
 Want to test GitHub Guardian's forensic scans against live environments? You can target these intentionally vulnerable open-source codebases to watch the audit logs, SAST engine, dependency scanners, and AI score calculations in action:
 
-1. **[OWASP NodeGoat](https://github.com/OWASP/NodeGoat)**: Demonstrates high-risk vulnerabilities, hardcoded database tokens, and database execution gaps in Node.js applications.
-2. **[Broken Crystals](https://github.com/BrightSecurity/broken-crystals)**: A modern vulnerable application featuring complex SAST, exposed PEM certificates, and credential issues.
-3. **[Juice Shop](https://github.com/juice-shop/juice-shop)**: A modern web app containing numerous security risks and architectural flaws.
+1. [OWASP NodeGoat](https://github.com/OWASP/NodeGoat): Demonstrates high-risk vulnerabilities, hardcoded database tokens, and database execution gaps in Node.js applications.
+2. [Broken Crystals](https://github.com/BrightSecurity/broken-crystals): A modern vulnerable application featuring complex SAST, exposed PEM certificates, and credential issues.
+3. [Juice Shop](https://github.com/juice-shop/juice-shop): A modern web app containing numerous security risks and architectural flaws.
 
 ---
 
-> *"Security isn't about building a wall. It's about knowing exactly what is happening inside the walls."*  
-> **GitHub Guardian System — Forensic Security Auditing for the Modern DevSecOps Era.**
+"Security isn't about building a wall. It's about knowing exactly what is happening inside the walls."  
+GitHub Guardian System — Forensic Security Auditing for the Modern DevSecOps Era.
